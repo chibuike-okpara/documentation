@@ -282,7 +282,7 @@
           "amount": { "type": "number" },
           "currency": { "type": "string" },
           "status": { "type": "string" },
-          "created_at": { "type": "string", "format": "date-time" }
+          "createdAt": { "type": "string", "format": "date-time" }
         }
       },
       "Transfer": {
