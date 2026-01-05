@@ -16,6 +16,20 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "API Playground",
+        "openapi": "documentation/payment-intents/openapi.json",
+        "groups": [
+          { "group": "Payment Intents", "pages": ["POST /v1/payments"] },
+          { "group": "Payment Links", "pages": ["POST /v1/payment-links"] },
+          { "group": "Transfers", "pages": ["POST /v1/transfers"] },
+          { "group": "Customers", "pages": ["POST /v1/customers"] },
+          {
+            "group": "Transactions",
+            "pages": ["GET /v1/transactions/{transaction_id}"]
+          }
+        ]
+      },
+      {
         "tab": "Documentation",
         "groups": [
           {
@@ -45,7 +59,6 @@
           {
             "group": "Payment Intents",
             "expanded": false,
-            "openapi": "documentation/payment-intents/openapi.json",
             "pages": [
               "documentation/payment-intents/overview",
               "documentation/payment-intents/create",
