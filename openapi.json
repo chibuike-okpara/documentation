@@ -248,7 +248,9 @@
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",
-        "scheme": "bearer"
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Use your Modem Pay secret key.\n- **Test environment:** Use your `sk_test_...` key.\n- **Production environment:** Only use `sk_live_...` on your personal, secure machine. Do NOT share or commit your production keys."
       }
     },
     "schemas": {
