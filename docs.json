@@ -135,6 +135,24 @@
     "light": "/logo/logo.png",
     "dark": "/logo/logo.png"
   },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "python",
+        "javascript",
+        "php",
+        "go",
+        "java",
+        "ruby"
+      ],
+      "defaults": "required",
+      "prefill": true
+    }
+  },
   "navbar": {
     "links": [
       {
