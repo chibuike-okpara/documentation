@@ -17,7 +17,7 @@
     "tabs": [
       {
         "tab": "API Playground",
-        "openapi": "documentation/payment-intents/openapi.json",
+        "openapi": "openapi.json",
         "groups": [
           { "group": "Payment Intents", "pages": ["POST /v1/payments"] },
           { "group": "Payment Links", "pages": ["POST /v1/payment-links"] },
