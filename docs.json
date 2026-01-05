@@ -45,6 +45,7 @@
           {
             "group": "Payment Intents",
             "expanded": false,
+            "openapi": "documentation/payment-intents/openapi.json",
             "pages": [
               "documentation/payment-intents/overview",
               "documentation/payment-intents/create",

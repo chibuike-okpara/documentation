@@ -1,0 +1,179 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Modem Pay API",
+    "description": "API for creating payment intents and checkout links on Modem Pay.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.modempay.com"
+    }
+  ],
+  "paths": {
+    "/v1/payments": {
+      "post": {
+        "summary": "Create a payment intent",
+        "operationId": "createPaymentIntent",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-No-Effect",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Optional header used for no-effect or dry-run behavior."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["data"],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": ["amount"],
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "example": 450
+                      },
+                      "currency": {
+                        "type": "string",
+                        "example": "GMD"
+                      },
+                      "return_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/success"
+                      },
+                      "cancel_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/cancel"
+                      },
+                      "callback_url": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://example.com/callback"
+                      },
+                      "network": {
+                        "type": "string",
+                        "example": "afrimoney"
+                      },
+                      "account_number": {
+                        "type": "string",
+                        "example": "7024725"
+                      },
+                      "skip_url_validation": {
+                        "type": "boolean",
+                        "default": false,
+                        "example": false
+                      },
+                      "metadata": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "example": {
+                          "order_id": "ORD-12345",
+                          "source": "playground"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment intent created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "payment_intent_id",
+                    "intent_secret",
+                    "payment_link",
+                    "amount",
+                    "currency",
+                    "status",
+                    "expires_at"
+                  ],
+                  "properties": {
+                    "payment_intent_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "example": "751799e3-923b-41e8-b010-401b5f059367"
+                    },
+                    "intent_secret": {
+                      "type": "string",
+                      "example": "eb6a6f1c4f62a6ef8310c7c51c1cfd5867c68eb7116808452881cd1a2fb34827c3a9fabbdff99fd952d1bdb21423fe4ff814b4ea8299767df87f192ae3c10ea0"
+                    },
+                    "payment_link": {
+                      "type": "string",
+                      "format": "uri",
+                      "example": "https://test.checkout.modempay.com/..."
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 450
+                    },
+                    "transaction_fee": {
+                      "type": "number",
+                      "example": 0
+                    },
+                    "transaction_fee_type": {
+                      "type": "string",
+                      "example": "business"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "GMD"
+                    },
+                    "expires_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2026-01-05T13:11:13.468Z"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "requires_payment_method"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
