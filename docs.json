@@ -163,7 +163,7 @@
         "ruby"
       ],
       "defaults": "required",
-      "prefill": true
+      "prefill": false
     }
   },
   "navbar": {
