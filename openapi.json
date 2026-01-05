@@ -162,7 +162,13 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["amount", "currency", "network", "account_number"],
+                "required": [
+                  "amount",
+                  "currency",
+                  "network",
+                  "account_number",
+                  "beneficiary_name"
+                ],
                 "properties": {
                   "amount": { "type": "number", "example": 100 },
                   "currency": { "type": "string", "example": "GMD" },
