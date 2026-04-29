@@ -43,7 +43,7 @@ This creates a coupon offering 15% off for purchases of at least 100 GMD, valid 
 async function createDataCoupon() {
   try {
     const coupon = await modempay.coupons.create({
-      name: 'Mobile Data Discount',
+      name: 'MobileDataDiscount',
       amount_off: 50, 
       duration: 'forever',
       currency: 'GMD',
@@ -65,7 +65,7 @@ This coupon gives 50 GMD off for first-time data bundle purchases of 200 GMD or 
 
 **Key Parameters**
 
-- `name` : Descriptive name (e.g., "Market Fest").
+- `name` : Descriptive name (e.g., "MarketFest").
 - `percent_off` : Percentage discount (e.g., 15 for 15%). Use amount_off for fixed amounts.
 - `currency` : Set to "GMD" for all amounts.
 - `duration` : "once", "repeating", or "forever".
@@ -152,17 +152,17 @@ async function deleteCoupon(couponId) {
 
 ### Applying a Coupon to a Payment Intent
 
-Apply a coupon to a [PaymentIntent](/documentation/payment-intents/overview) to discount the transaction. Include the coupon ID in the `coupon` field when creating a [PaymentIntent](/documentation/payment-intents/overview).
+Apply a coupon to a [PaymentIntent](/documentation/payment-intents/overview) to discount the transaction. Include the coupon `id` or `name` in the `coupon` field when creating a [PaymentIntent](/documentation/payment-intents/overview).
 
 <CodeGroup>
 ```typescript nodejs
-async function createPaymentIntentWithCoupon(couponId) {
+async function createPaymentIntentWithCoupon(couponIdOrName) {
   try {
     const paymentIntent = await modempay.paymentIntents.create({
       amount: 150,
       currency: 'GMD',
       customer: '8a8c8a0e-c5d2-4692-a94b-25284d36adc7',
-      coupon: couponId
+      coupon: couponIdOrName
     });
     console.log('Payment Intent with coupon:', paymentIntent);
   } catch (error) {
@@ -191,4 +191,3 @@ If the coupon offers 15% off and the original amount is 150 GMD, the discounted 
 - **Invalid Coupon**: Verify the coupon ID and ensure `valid: true`.
 - **Restrictions Not Met**: Check if the `PaymentIntent` meets `minimum_amount` or `first_time_transaction` requirements.
 - **API Errors**: Confirm API key setup and network connectivity.
-
