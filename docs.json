@@ -29,7 +29,7 @@
             ]
           },
           {
-            "group": "Pay-ins",
+            "group": "Collections",
             "expanded": false,
             "pages": [
               "documentation/payment-intents/overview",
@@ -38,6 +38,14 @@
               "documentation/payment-intents/callback_url",
               "documentation/payment-intents/refund",
               "documentation/payment-intents/management"
+            ]
+          },
+          {
+            "group": "DeFi",
+            "pages": [
+              "documentation/defi/accept-stablecoin-payments",
+              "documentation/defi/offramp",
+              "documentation/defi/offramp-resellers"
             ]
           },
           {

@@ -1,0 +1,148 @@
+---
+title: "Off-Ramp for Resellers"
+---
+
+If you run your own platform, you can offer off-ramp to your users and add your
+own markup on top. Your users pay the off-ramp amount plus your markup; you earn
+the markup as settled dalasi. Modem Pay handles the stablecoin, the conversion,
+and the payout, you never touch the crypto or the fiat.
+
+<Note>
+  This page builds on the regular [Off-Ramp](/documentation/defi/offramp) flow.
+  Everything there applies; this page covers only the extra `markup_config`
+  field.
+</Note>
+
+## How the markup works
+
+When you add a `markup_config`, the amount your user pays becomes
+**base + markup**:
+
+- **Base** — the stablecoin needed to settle the `gmd_amount` (plus the standard
+  fee), exactly as in a regular off-ramp.
+- **Markup** — your spread, added on top. Your user pays it; you earn it.
+
+The markup is fixed when the off-ramp is created and stored as
+**`markup_share_usd`** (in USD). As payment arrives, the markup is settled to
+your balance proportionally alongside the base, and is fully settled when the
+payment completes.
+
+## markup_config
+
+<ParamField body="markup_config" type="object">
+  Your spread. Added to what the user pays; settled to you.
+
+  <Expandable title="markup_config">
+    <ParamField body="type" type="string" required>
+      Either `fixed` (a flat USD amount) or `percentage` (a percent of the base).
+    </ParamField>
+    <ParamField body="value" type="number" required>
+      The markup. For `fixed`, a USD amount (e.g. `4` = $4). For `percentage`,
+      a percent of the base (e.g. `5` = 5%).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Warning>
+  Markup is capped relative to the base amount. A request whose markup exceeds
+  the allowed maximum is rejected at creation. Keep your spread reasonable.
+</Warning>
+
+## Example
+
+A `fixed` markup of `4` on a 1000 GMD off-ramp: the base might be ~13.62 USDT,
+and your user pays ~17.62 USDT (base + 4). You earn the 4 (settled as dalasi)
+when the payment completes.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 1000,
+    "destination": "mobile_money",
+    "payout_method": {
+      "network": "wave",
+      "account_number": "7000000",
+      "account_name": "Account Holder"
+    },
+    "markup_config": {
+      "type": "fixed",
+      "value": 4
+    }
+  }'
+```
+
+```typescript nodejs
+const offramp = await modempay.offramp.create({
+  gmd_amount: 1000,
+  destination: "mobile_money",
+  payout_method: {
+    network: "wave",
+    account_number: "7000000",
+    account_name: "Account Holder",
+  },
+  markup_config: {
+    type: "fixed",
+    value: 4,
+  },
+});
+```
+
+</CodeGroup>
+
+**Response (markup fields)**
+
+```json json
+{
+  "id": "c4a8e1d7-6b2f-4a90-8e3c-5f1b9d2a7c44",
+  "gmd_amount": 1000,
+  "gmd_rate": 74.2297,
+  "fee": 0.14,
+  "pay_amount": 17.62,
+  "pay_currency": "USDT",
+  "pay_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "status": "pending",
+  "markup_share_usd": 4,
+  "markup_config": {
+    "type": "fixed",
+    "value": 4
+  },
+  "destination": "mobile_money",
+  "payout_method": {
+    "network": "wave",
+    "account_name": "Account Holder",
+    "account_number": "7000000"
+  },
+  "reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX"
+}
+```
+
+Compared to a regular off-ramp: **`pay_amount`** now includes your markup, and
+**`markup_share_usd`** shows the markup you'll earn (in USD).
+
+## How settlement works
+
+- The **base** settles the `gmd_amount`, to your balance, or to the mobile
+  money wallet in `payout_method`, exactly as in a regular off-ramp.
+- Your **markup** is settled to your Modem Pay balance, as a separate credit
+  from the base for clarity.
+- Both settle proportionally as partial payments arrive, and complete together
+  when the full amount is paid.
+
+<Note>
+  When settling the base directly to mobile money, your markup is still credited
+  to your Modem Pay balance (not sent to the wallet). This keeps your earnings
+  separate from your user's payout.
+</Note>
+
+## Notes
+
+- `markup_share_usd` is fixed at creation and does not change if the rate moves
+  later.
+- The markup is your revenue; the standard Modem Pay fee still applies to the
+  base.
+- For payment, status values, and webhooks, see the regular
+  [Off-Ramp](/documentation/defi/offramp) page.

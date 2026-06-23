@@ -1,0 +1,263 @@
+---
+title: "Off-Ramp"
+---
+
+Off-ramp lets you convert stablecoins (USDT/USDC) into Gambian Dalasi (GMD). You
+create an off-ramp request for a GMD amount, we return a stablecoin address to
+pay, and once paid we settle the dalasi, either to your Modem Pay balance or
+straight to a mobile money wallet.
+
+<Note>Off-ramp runs in live mode only. Use a live API key.</Note>
+
+## How it works
+
+<Steps>
+  <Step title="Create an off-ramp request">
+    Tell us the GMD amount you want and where to settle it. We return a
+    stablecoin address and the exact amount to pay.
+  </Step>
+  <Step title="Pay the stablecoin amount">
+    Send the quoted USDT/USDC to the address. Payment can arrive in one or
+    several transfers.
+  </Step>
+  <Step title="We settle the dalasi">
+    Once paid, we credit the GMD to your balance or pay it out to the mobile
+    money wallet you specified.
+  </Step>
+</Steps>
+
+## Create an off-ramp
+
+<ParamField body="gmd_amount" type="number" required>
+  The amount of Gambian Dalasi you want to receive.
+</ParamField>
+
+<ParamField body="pay_currency" type="string" default="USDT">
+  The stablecoin used to pay. Defaults to `USDT`.
+</ParamField>
+
+<ParamField body="network" type="string" default="TRC20">
+  The network for the payment. Defaults to `TRC20`.
+</ParamField>
+
+<ParamField body="destination" type="modempay_balance | mobile_money">
+  Where the dalasi is settled. Either `modempay_balance` (credit your balance)
+  or `mobile_money` (pay out to a wallet). Defaults to your balance.
+</ParamField>
+
+<ParamField body="payout_method" type="object">
+  Required only when `destination` is `mobile_money`. The wallet to pay out to.
+
+  <Expandable title="payout_method">
+    <ParamField body="network" type="wave | afrimoney" required>
+      The mobile money provider, e.g. `wave`.
+    </ParamField>
+    <ParamField body="account_number" type="string" required>
+      The wallet number to receive the dalasi.
+    </ParamField>
+    <ParamField body="account_name" type="string" required>
+      The account holder's name.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  A URL to receive webhook notifications for this off-ramp.
+</ParamField>
+
+<Note>
+  `payout_method` is optional. Leave it out to settle to your Modem Pay balance;
+  include it (with `destination: "mobile_money"`) to pay out to a wallet.
+</Note>
+
+### Settle to your Modem Pay balance
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 1000
+  }'
+```
+
+```typescript nodejs
+const offramp = await modempay.offramp.create({
+  gmd_amount: 1000,
+});
+```
+
+</CodeGroup>
+
+### Settle directly to a mobile money wallet
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 1000,
+    "destination": "mobile_money",
+    "payout_method": {
+      "network": "wave",
+      "account_number": "7000000",
+      "account_name": "Account Holder"
+    }
+  }'
+```
+
+```typescript nodejs
+const offramp = await modempay.offramp.create({
+  gmd_amount: 1000,
+  destination: "mobile_money",
+  payout_method: {
+    network: "wave",
+    account_number: "7000000",
+    account_name: "Account Holder",
+  },
+});
+```
+
+</CodeGroup>
+
+**Response**
+
+```json json
+{
+  "id": "b7c93f02-1a4e-4d8c-9f31-2e6a5d8c41bb",
+  "provider_fee": 0,
+  "actually_paid": 0,
+  "fee_bearer": "business",
+  "business_id": "8a8d29ad-7e3c-445d-9732-51893ffcfb7d",
+  "account_id": "f3ae3627-a381-479e-ac7e-c9c62fcd0225",
+  "direction": "off_ramp",
+  "destination": "mobile_money",
+  "payout_method": {
+    "network": "wave",
+    "account_name": "Account Holder",
+    "account_number": "7000000"
+  },
+  "gmd_amount": 1000,
+  "gmd_rate": 74.2297,
+  "fee": 0.14,
+  "fee_currency": "USD",
+  "pay_amount": 13.62,
+  "pay_currency": "USDT",
+  "pay_address": "TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "network": "TRC20",
+  "provider_payment_id": "9f2c7b81-3d5a-4e6f-8a2b-1c4d7e9f0a3b",
+  "invoice_expires_at": "2026-01-01T00:30:00.000Z",
+  "status": "pending",
+  "reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX",
+  "test_mode": false,
+  "markup_share_usd": 0,
+  "markup_config": null,
+  "events": {
+    "2026-01-01T00:00:00.000Z": {
+      "source": "system.create_off_ramp",
+      "status": "pending"
+    }
+  },
+  "metadata": {
+    "gmd_rate": 74.2297,
+    "usd_equivalent": 13.47
+  },
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "provider_invoice_id": null,
+  "invoice_url": null,
+  "failure_reason": null,
+  "credit_transaction_id": null,
+  "quote_id": null
+}
+```
+
+The key fields to act on:
+
+- **`pay_address`** — send the stablecoin here.
+- **`pay_amount`** + **`pay_currency`** — the exact amount and coin to send.
+- **`gmd_amount`** — the dalasi that will be settled.
+- **`invoice_expires_at`** — pay before this time.
+- **`status`** — starts at `pending`.
+
+## Paying
+
+Send `pay_amount` of `pay_currency` to `pay_address` before
+`invoice_expires_at`.
+
+<Warning>
+  **Payment may arrive in more than one transfer.** A payer can send the amount
+  in parts. We settle the dalasi proportionally as funds arrive, and finish when
+  the full amount is received. Track progress with the `status` field and the
+  webhook (below) rather than assuming a single payment.
+</Warning>
+
+## Status values
+
+<ParamField body="pending" type="status">
+  Created, awaiting payment.
+</ParamField>
+
+<ParamField body="underpaid" type="status">
+  Some funds received, but not yet the full amount.
+</ParamField>
+
+<ParamField body="paid" type="status">
+  Fully paid; dalasi settled.
+</ParamField>
+
+<ParamField body="overpaid" type="status">
+  Paid more than required; dalasi settled.
+</ParamField>
+
+<ParamField body="expired" type="status">
+  Not paid (or not fully paid) before expiry.
+</ParamField>
+
+## Retrieve an off-ramp
+
+Fetch the current state of an off-ramp by its `id`. Useful for checking
+`status`, how much has been paid (`actually_paid`), and the settlement details.
+
+```bash cURL
+curl https://api.modempay.com/v1/minting/ramps/b7c93f02-1a4e-4d8c-9f31-2e6a5d8c41bb \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Returns the same shape as the create response, reflecting the latest state —
+including the updated `status`, `actually_paid`, and `events`.
+
+## Webhooks
+
+Set `callback_url` to receive updates as the off-ramp progresses. You may receive
+more than one event as partial payments arrive and the dalasi is settled.
+
+For verifying that a webhook genuinely came from Modem Pay, see the
+[Webhooks guide](/documentation/core/webhooks).
+
+## If a mobile money payout fails
+
+When `destination` is `mobile_money`, we attempt to pay the dalasi to the wallet
+in `payout_method`. If that payout fails for any reason (e.g. the provider is
+unreachable or the wallet is invalid), the amount is **credited to your Modem
+Pay balance instead**, it is never lost. You can then retry the payout from your
+balance or resolve the wallet details and pay out again.
+
+<Note>
+  A failed mobile money payout always falls back to your `modempay_balance`. So
+  funds from a confirmed payment are safe even if the wallet payout doesn't go
+  through.
+</Note>
+
+## Notes
+
+- `pay_amount` is derived from `gmd_amount`, the current `gmd_rate`, and the
+  `fee`. The rate is locked at creation.
+- Settling to a mobile money wallet requires `payout_method`; settling to your
+  balance does not.
+- To resell off-ramp on your own platform and earn a spread, see
+  [Off-Ramp for Resellers](/documentation/defi/offramp-resellers).
