@@ -2,47 +2,52 @@
 title: Payment Intents
 ---
 
-A **Payment Intent** in Modem Pay represents a user's intention to pay a specified amount. It is used to initiate a payment process and generate a link for the customer to complete the transaction securely.
+A **Payment Intent** is Modem Pay's way of capturing that a customer wants to
+pay a certain amount. You use it to kick off a payment and get a link your
+customer can use to pay securely.
 
-### Payment Intent Object
+### The Payment Intent object
 
-The **Payment Intent** object contains the following properties:
+Here's everything you can include when you create one:
 
 - **amount**: The total amount to be paid.
 - **currency**: The currency of the payment (optional).
-- **payment_methods**: A list of accepted payment methods (optional) (e.g., "card", "bank", "wallet").
+- **payment_methods**: A list of payment methods you'll accept (optional), e.g. "card", "bank", "wallet".
 - **title**: A title for the payment (optional).
 - **description**: A description of the payment (optional).
-- **customer**: The ID of the customer making the payment (optional).
-- **customer_name**: The name of the customer making the payment (optional).
-- **customer_email**: The email address of the customer making the payment (optional).
-- **customer_phone**: The phone number of the customer making the payment (optional).
-- **metadata**: Any additional information about the payment (optional).
-- **return_url**: The URL to which the customer is redirected after a successful payment (optional).
-- **cancel_url**: The URL to which the customer is redirected if they cancel the payment (optional).
-- **payment_method**: The specific payment method to use (optional).
-- **coupon**: The ID of a coupon to apply to the payment (optional). If provided, the coupon's discount will be applied to the payment amount.
-- **callback_url**: The endpoint where Modem Pay will send a webhook notification after the payment has been processed.
-- **skip_url_validation**: Set to `true` to bypass Modem Pay's validation of the `cancel_url` or `return_url`. This is most commonly needed when these URLs use mobile app deeplinks, allowing you to return users directly into your app.
+- **customer**: The ID of the customer paying (optional).
+- **customer_name**: The customer's name (optional).
+- **customer_email**: The customer's email address (optional).
+- **customer_phone**: The customer's phone number (optional).
+- **metadata**: Any extra information you want to attach to the payment (optional).
+- **return_url**: Where the customer is sent after they pay successfully (optional).
+- **cancel_url**: Where the customer is sent if they cancel (optional).
+- **payment_method**: A specific payment method to use (optional).
+- **coupon**: The ID of a coupon to apply (optional). If you include one, its discount is taken off the payment amount.
+- **callback_url**: The web address where Modem Pay sends you a notification once the payment has been handled.
+- **skip_url_validation**: Set this to `true` to skip Modem Pay's usual checking of your `cancel_url` or `return_url`. You'll mostly need this when those links are mobile app deeplinks, so customers land back inside your app.
 
-#### Payment Intent Response Object
+#### What you get back
 
-These are the response properties after the Payment Intent is created:
+After you create a Payment Intent, here's what comes back:
 
-- **status**: A boolean value indicating whether the payment intent creation was successful. Returns `true` if successful, `false` otherwise.
-- **message**: A descriptive message about the result of the Payment Intent creation (e.g., "Payment intent created successfully. Please proceed to complete the payment.").
-- **data**: An object containing the details of the payment intent. The properties inside this object are:
-  - **intent_secret**: A secret key used to secure the payment intent, required for completing the payment.
-  - **payment_link**: A URL to the hosted payment page where the customer can complete the payment.
-  - **amount**: The total amount to be paid, expressed in the currency specified in **currency**.
-  - **currency**: The currency code (e.g., `GMD` for Gambian Dalasi) in which the payment is to be made.
-  - **expires_at**: A timestamp (ISO 8601 format) indicating when the payment intent will expire. After this time, the payment intent will no longer be valid.
-  - **status**: The current status of the payment intent. It can be one of the following:
-    - `requires_payment_method`: Payment method is required before proceeding.
-    - `processing`: The payment is currently being processed.
-    - `successful`: The payment was successfully completed.
-    - `failed`: The payment failed to process.
-    - `cancelled`: The payment was canceled by the customer or the system.
+- **status**: True or false — whether the Payment Intent was created successfully. `true` means it worked, `false` means it didn't.
+- **message**: A short, readable note about how it went (e.g. "Payment intent created successfully. Please proceed to complete the payment.").
+- **data**: An object holding the details of the Payment Intent. Inside it:
+  - **intent_secret**: A secret key that protects the Payment Intent, needed to complete the payment.
+  - **payment_link**: The link to the hosted payment page where your customer pays.
+  - **amount**: The total amount to be paid, in the currency you set.
+  - **currency**: The currency code (e.g. `GMD` for Gambian Dalasi) the payment is made in.
+  - **expires_at**: A timestamp (ISO 8601 format) for when the Payment Intent expires. After this time, it's no longer valid.
+  - **status**: Where the Payment Intent currently stands. It can be one of:
+    - `requires_payment_method`: A payment method is needed before going further.
+    - `processing`: The payment is being handled right now.
+    - `successful`: The payment went through.
+    - `failed`: The payment didn't go through.
+    - `cancelled`: The payment was called off, either by the customer or the system.
 
-### Summary
-Payment Intents in Modem Pay are used to initiate and manage the payment flow. By grouping parameters and responses in a structured way, they allow businesses to control how and when payments are processed while providing a seamless experience for their customers.
+### In short
+
+Payment Intents are how you start and keep track of a payment in Modem Pay. By
+keeping all the inputs and responses neatly organized, they let you control how
+and when payments happen while keeping things smooth for your customers.

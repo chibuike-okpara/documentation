@@ -2,61 +2,63 @@
 title: "Accept Stablecoin Payments"
 ---
 
-Accept payments in **USDT** and **USDC** and receive your settlement in fiat. You
-create a payment intent for an amount, we give you a ready-to-use payment page,
-and we notify you when the customer has paid, no wallet handling, addresses, or
-blockchain details on your side.
+Take payments in **USDT** and **USDC** (digital dollars that hold a steady
+value) and get your money settled as normal cash. You tell us how much to
+collect, we hand you a ready-made payment page, and we let you know when your
+customer has paid. You never touch wallets, addresses, or any blockchain
+details.
 
 <Note>
-  Stablecoin payments are <b>not supported in test mode</b>. You must use a live
-  API key to create and accept USDT/USDC payments.
+  Stablecoin payments <b>do not work in test mode</b>. You need a live API key
+  to create and accept USDT/USDC payments.
 </Note>
 
 ## How it works
 
 <Steps>
-  <Step title="Create a quote intent">
-    Tell us how much to collect (in USD or GMD) and we return a payment link.
+  <Step title="Create a payment request">
+    Tell us how much to collect (in USD or GMD) and we give you back a payment
+    link.
   </Step>
   <Step title="Send your customer to the payment page">
-    Redirect them to the `link` from the response. They complete payment there.
+    Point them to the `link` we return. They pay right there.
   </Step>
-  <Step title="Get notified when paid">
-    We send a `charge.succeeded` webhook with how much has been paid so far.
+  <Step title="Get notified when they pay">
+    We send you a `charge.succeeded` message telling you how much has come in so
+    far.
   </Step>
 </Steps>
 
-## Create a quote intent
+## Create a payment request
 
-Creates a payment intent and returns a hosted payment page link.
+This creates the request and gives you a hosted payment page link to share.
 
 <ParamField body="amount" type="number" required>
-  The amount to collect.
+  How much you want to collect.
 </ParamField>
 
 <ParamField body="currency" type="string" default="USD">
-  Either `USD` or `GMD`. If you pass `GMD`, we convert it to USD automatically
-  at the current exchange rate, the resulting intent is always in USD. Defaults
-  to `USD`.
+  Either `USD` or `GMD`. If you send a `GMD` amount, we convert it to USD for
+  you at the current exchange rate, so the request itself is always in USD.
+  Defaults to `USD`.
 </ParamField>
 
 <ParamField body="metadata" type="object">
-  Any key–value data you want stored with the intent and returned to you later
-  (for example your own order ID). Returned unchanged in webhooks.
+  Any of your own notes you want stored with the request and handed back to you
+  later (for example, your order number). We return it to you untouched.
 </ParamField>
 
 <ParamField body="callback_url" type="string">
-  A URL to receive webhook notifications for this intent.
+  A web address where you want to be notified about this payment.
 </ParamField>
 
 <ParamField body="expires_at" type="string">
-  Optional expiry time for the payment (ISO 8601).
+  An optional deadline for the payment (ISO 8601 format).
 </ParamField>
 
 <Note>
-  The minimum amount is **5 USD**. If you submit a `GMD` amount that converts to
-  less than $5, the request is rejected with a message that includes the current
-  exchange rate.
+  The minimum is **5 USD**. If you send a `GMD` amount that converts to less
+  than $5, we reject it and tell you the current exchange rate.
 </Note>
 
 <CodeGroup>
@@ -79,11 +81,11 @@ curl -X POST https://api.modempay.com/v1/minting/intents \
 </CodeGroup>
 
 <Note>
-  Only `amount` is required. Add `metadata` if you want your own references
-  echoed back in webhooks.
+  Only `amount` is required. Add `metadata` if you want your own references sent
+  back to you in the notifications.
 </Note>
 
-**Response**
+**What you get back**
 
 ```json json
 {
@@ -92,8 +94,8 @@ curl -X POST https://api.modempay.com/v1/minting/intents \
   "amount": 10,
   "currency": "USD",
   "metadata": {},
-  "business_id": "biz_xxxxxxxxxxxxxxxx",
-  "account_id": "acct_xxxxxxxxxxxxxxxx",
+  "business_id": "8a8d29ad-7e3c-445d-9732-51893ffcfb7d",
+  "account_id": "60bcf944-2c46-409f-9654-a93c36db7276",
   "createdAt": "2026-01-01T00:00:00.000Z",
   "updatedAt": "2026-01-01T00:00:00.000Z",
   "payment_link_id": null,
@@ -104,79 +106,80 @@ curl -X POST https://api.modempay.com/v1/minting/intents \
 }
 ```
 
-Send your customer to the `link`. The hosted page handles the payment and accepts
-**USDT** or **USDC**. The intent starts with `status: "pending"`.
+Send your customer to the `link`. That page handles the payment and accepts
+**USDT** or **USDC**. The request starts off as `status: "pending"` (waiting for
+payment).
 
-## Accepting payment
+## Getting paid
 
-Your customer pays on the hosted page, you don't handle the payment method
-yourself. A couple of things to design for:
+Your customer pays on the hosted page, so you never deal with the payment method
+yourself. There's one thing worth designing around:
 
 <Warning>
-  **A payment may arrive in more than one transfer, and may not match the full
-  amount at first.** A customer can pay part of the amount, or pay across
-  several transfers. Reconcile against the running total we send, rather than
-  assuming a single full payment.
+  **A payment might not arrive all at once, and might not match the full amount
+  right away.** A customer can pay part of it, or pay across several separate
+  transfers. So track the running total we send you, rather than expecting one
+  single full payment.
 </Warning>
 
-Two fields tell you what you need:
+Two pieces of information tell you everything you need:
 
-- **`amount`** — the total paid toward this intent so far. It accumulates across
-  transfers; it is **not** the originally quoted amount.
-- **`status`** — `partially_paid` while the total is below the quote, and
-  `completed` once the full amount has been received.
+- **`amount`** — the total paid toward this request so far. It adds up across
+  transfers. It is **not** the amount you originally asked for.
+- **`status`** — `partially_paid` while the total is still short, and
+  `completed` once the full amount has arrived.
 
-The originally quoted amount is in **`metadata.usd_amount`**. A payment is
-complete when `amount` reaches `metadata.usd_amount`, which is also when
-`status` becomes `completed`.
+The amount you originally asked for is stored in **`metadata.usd_amount`**. The
+payment is done when `amount` reaches `metadata.usd_amount`, which is also the
+moment `status` becomes `completed`.
 
-## List quote intents
+## List your payment requests
 
 ```bash cURL
 curl https://api.modempay.com/v1/minting/intents \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-## Retrieve a quote intent
+## Look up a single payment request
 
 ```bash cURL
 curl https://api.modempay.com/v1/minting/intents/00000000-000000000000 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Returns the same shape as the create response, reflecting the latest state of the
-intent.
+This gives you back the same details as when you created it, showing the latest
+state of the request.
 
-## Webhooks
+## Notifications (webhooks)
 
-When a payment is received, we send a `charge.succeeded` event to your configured
-webhook URL. You may receive it more than once for the same payment as the
-running total grows.
+A webhook is just an automatic message we send to your web address whenever
+money comes in. When a payment is received, we send a `charge.succeeded` event.
+You may get it more than once for the same payment as the running total grows.
 
 <ParamField body="event" type="string">
-  The event type, e.g. `charge.succeeded`.
+  The type of event, e.g. `charge.succeeded`.
 </ParamField>
 
 <ParamField body="payload" type="object">
-  The charge object. Key fields below.
+  The payment details. The main fields are below.
 </ParamField>
 
 <ParamField body="payload.amount" type="number">
-  Total paid toward this charge so far, in USD. Accumulates across transfers.
+  Total paid toward this payment so far, in USD. Adds up across transfers.
 </ParamField>
 
 <ParamField body="payload.status" type="string">
-  `partially_paid` until the full amount is received, then `completed`.
+  `partially_paid` until the full amount is in, then `completed`.
 </ParamField>
 
 <ParamField body="payload.metadata.usd_amount" type="number">
-  The originally quoted amount, in USD. Compare `amount` against this to know
-  when the charge is fully paid.
+  The amount you originally asked for, in USD. Compare `amount` against this to
+  know when the payment is fully covered.
 </ParamField>
 
 <ParamField body="payload.metadata.payment_history" type="array">
-  Each individual payment received, with `amount_paid_usd`, `amount_paid_gmd`,
-  and `timestamp`.
+  A list of each individual payment received, with `amount_paid_usd`,
+  `amount_paid_gmd`, and `timestamp`.
 </ParamField>
 
 ```json json
@@ -191,8 +194,8 @@ running total grows.
     "payment_method": "TRC20",
     "reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX",
     "transaction_reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX",
-    "account_id": "acct_xxxxxxxxxxxxxxxx",
-    "business_id": "biz_xxxxxxxxxxxxxxxx",
+    "account_id": "60bcf944-2c46-409f-9654-a93c36db7276",
+    "business_id": "8a8d29ad-7e3c-445d-9732-51893ffcfb7d",
     "test_mode": false,
     "metadata": {
       "quote_id": "11111111-1111-1111-1111-111111111111",
@@ -215,29 +218,32 @@ running total grows.
 }
 ```
 
-In this example, `amount` is `10` against a quoted `metadata.usd_amount` of `20`,
-so `status` is `partially_paid`. When the remaining `10` is paid, `amount`
+In this example, `amount` is `10` against an asked-for `metadata.usd_amount` of
+`20`, so `status` is `partially_paid`. Once the remaining `10` is paid, `amount`
 becomes `20` and `status` becomes `completed`.
 
 <Warning>
-  Because payment can arrive in multiple parts, you may receive more than one
-  `charge.succeeded` event for the same charge as `amount` increases. Make your
-  handler **idempotent** and key your records on the charge `id` (or your own
-  `metadata` reference), using `amount` as the running total.
+  Because a payment can come in several parts, you may get more than one
+  `charge.succeeded` message for the same payment as `amount` grows. Build your
+  handler so that getting the same message twice doesn't double-count anything
+  (this is called being **idempotent**). Match your records on the payment `id`
+  (or your own `metadata` reference), and treat `amount` as the running total.
 </Warning>
 
 <Note>
-  For verifying that a webhook genuinely came from Modem Pay (signature header
-  and validation), see the [Webhooks guide](/documentation/core/webhooks).
+  To confirm a notification really came from Modem Pay (checking the signature
+  header), see the [Webhooks guide](/documentation/core/webhooks).
 </Note>
 
-## Reconciliation checklist
+## Quick checklist
 
-- Store the charge `id` (and your own reference in `metadata`) when you create
-  the intent.
-- On each `charge.succeeded`, read `payload.amount` (USD) and compare it to
-  `payload.metadata.usd_amount`.
-- Treat the payment as complete when `amount` reaches `usd_amount` **or** when
+- Save the payment `id` (and your own reference in `metadata`) when you create
+  the request.
+- Each time you get a `charge.succeeded` message, read `payload.amount` (USD)
+  and compare it to `payload.metadata.usd_amount`.
+- Treat the payment as done when `amount` reaches `usd_amount` **or** when
   `status` is `completed`.
-- Use `payload.metadata.payment_history` if you need the individual payments.
-- Handle repeated webhooks for the same `id` idempotently.
+- Use `payload.metadata.payment_history` if you ever need to see the individual
+  payments.
+- Make sure getting the same message twice for the same `id` doesn't cause any
+  double-counting.

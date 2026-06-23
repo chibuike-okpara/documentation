@@ -2,25 +2,39 @@
 title: Create a Payment Intent
 ---
 
-The **Payment Intent** represents an intention to complete a payment. You can create a Payment Intent by specifying key details like the payment amount, the customer, and the payment method.
+A **Payment Intent** captures that someone wants to pay. You create one by
+giving us the key details, how much to charge, who's paying, and how, and we
+hand you back a link your customer can use to pay.
 
-<iframe width="100%" height="425" src="https://www.youtube.com/embed/Gox1JSWZYdg?si=YoJPOWZHxGNiaRUt" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe
+  width="100%"
+  height="425"
+  src="https://www.youtube.com/embed/Gox1JSWZYdg?si=YoJPOWZHxGNiaRUt"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  referrerpolicy="strict-origin-when-cross-origin"
+  allowfullscreen
+></iframe>
 
-#### General Workflow
-To create a payment intent, you generally follow these steps:
-1. Specify the amount the customer needs to pay.
-2. Optionally, provide additional information such as the customer details, payment methods, and redirect URLs.
-3. Receive a link to the payment page, where the customer can complete the payment.
+#### The general flow
+
+Creating a Payment Intent usually goes like this:
+
+1. Say how much the customer needs to pay.
+2. Optionally, add more details, who the customer is, which payment methods to allow, and where to send them afterward.
+3. Get back a link to the payment page, where the customer pays.
 
 ---
 
-### Scenarios for Creating a Payment Intent
+### Different ways to create a Payment Intent
 
-#### 1. **Creating a Payment Intent with Just Amount**
+#### 1. **Just the amount**
 
-In this simplest scenario, you only need to provide the amount that needs to be paid. This is the most basic setup for a payment.
+The simplest case: all you need is the amount to charge. This is the most basic
+setup.
 
-- **Scenario**: You want to create a payment intent for a customer to pay GMD 450, but you do not specify a customer or any other optional parameters.
+- **Situation**: You want a customer to pay GMD 450, and you're not adding a customer record or any other optional details.
 - **Request**:
 
 <CodeGroup>
@@ -46,7 +60,7 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 ```
 </CodeGroup>
 
-- **Result**: A Payment Intent is created with a link to the payment page, where the customer can complete the payment.
+- **Result**: A Payment Intent is created, along with a link to the payment page where the customer pays.
 
 ```json
 {
@@ -63,12 +77,12 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 }
 ```
 
+#### 2. **Amount and customer**
 
-#### 2. **Creating a Payment Intent with Amount and Customer**
+Here you add the customer who's paying, on top of the amount. This ties the
+payment to a specific customer so it's easier to keep track of.
 
-In this scenario, in addition to specifying the amount, you also specify the customer who will be making the payment. This helps associate the payment with a particular customer for better tracking.
-
-- **Scenario**: You want to create a payment intent for GMD 450 and associate it with a specific customer.
+- **Situation**: You want to charge GMD 450 and link it to a particular customer.
 - **Request**:
 
 <CodeGroup>
@@ -103,11 +117,13 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 ```
 </CodeGroup>
 
-#### 3. **Creating a Payment Intent with Amount, Customer, and Payment Methods**
+#### 3. **Amount, customer, and payment methods**
 
-This scenario involves a more specific setup where you specify the amount, associate the intent with a customer, and predefine the payment methods the customer will use. This is useful when you want to guarantee specific methods of payment.
+A more specific setup: you set the amount, link a customer, and decide ahead of
+time which payment methods the customer can use. Handy when you want to limit
+things to certain methods.
 
-- **Scenario**: You want to create a payment intent for GMD 450, associate it with a customer, and specify that the payment should be processed using a particular payment method.
+- **Situation**: You want to charge GMD 450, link it to a customer, and only allow a particular payment method.
 - **Request**:
 
 <CodeGroup>
@@ -149,11 +165,12 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 ```
 </CodeGroup>
 
-#### 4. **Creating a Payment Intent with Amount, Customer, and Specific Payment Method ID**
+#### 4. **Amount, customer, and a specific saved payment method**
 
-In this scenario, you create a Payment Intent specifying a particular customer's payment method ID. This is useful when you want to charge a customer using a specific saved payment method, such as a stored card or bank account.
+Here you point to one of the customer's saved payment methods by its ID. Useful
+when you want to charge a saved card or bank account directly.
 
-- **Scenario**: You want to create a payment intent for GMD 450, associate it with a specific customer, and use a specific saved payment method ID from the customer’s account. This setup allows you to charge a saved payment method directly, streamlining the payment process for returning customers.
+- **Situation**: You want to charge GMD 450, link it to a customer, and use a specific saved payment method from their account. This lets you charge a saved method straight away, which makes things quicker for returning customers.
 
 - **Request**:
 
@@ -198,20 +215,24 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 
 ---
 
-### Common Optional Parameters for Creating a Payment Intent
+### Common optional details
 
-While the **amount** is the only required parameter for creating a payment intent, you can optionally include other parameters to enhance the payment flow:
+The **amount** is the only thing you must include. Everything else is optional,
+to round out the payment:
 
-- **currency**: The currency for the payment (optional). If omitted, the default currency will be used.
-- **title**: A title for the payment (optional).
-- **description**: A description of the payment (optional).
-- **metadata**: Any additional custom data (optional).
-- **return_url**: A URL to which the customer will be redirected after completing the payment (optional).
-- **cancel_url**: A URL to which the customer will be redirected if they cancel the payment (optional).
-- **payment_methods**: A list of accepted payment methods (optional).
+- **currency**: The currency for the payment. If you leave it out, the default currency is used.
+- **title**: A title for the payment.
+- **description**: A description of the payment.
+- **metadata**: Any extra custom information you want to attach.
+- **return_url**: Where the customer is sent after they pay.
+- **cancel_url**: Where the customer is sent if they cancel.
+- **payment_methods**: A list of payment methods you'll accept.
 
 ---
 
-### Conclusion
+### Wrapping up
 
-Creating a Payment Intent is a straightforward process. By specifying just the **amount**, or additionally associating the intent with a **customer** and **payment method**, you can tailor the payment flow to meet specific needs. Once created, you will receive a unique link that the customer can use to complete the payment. This flexible setup ensures a seamless payment experience.
+Creating a Payment Intent is simple. You can give just the **amount**, or also
+add a **customer** and a **payment method** to shape the flow to your needs.
+Either way, you get back a unique link the customer uses to pay, keeping the
+experience smooth.
