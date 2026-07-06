@@ -1,0 +1,260 @@
+---
+title: "Bulk Payouts"
+---
+
+## What is a bulk payout?
+
+A bulk payout means you send money to many people at once. You give us one list. We pay everyone on the list for you.
+
+You can use it to:
+
+- Pay salaries to your workers
+- Send winnings to many players
+- Pay your agents
+- Refund many customers
+
+## How it works
+
+<Steps>
+  <Step title="You send us a list">
+    Each item on the list has an amount, a network (Wave or Afrimoney), a name,
+    and an account number.
+  </Step>
+  <Step title="We take the money from your balance">
+    We take the full amount for the whole list, plus fees, from your payout
+    balance.
+  </Step>
+  <Step title="We pay each person">
+    We send the payouts one by one. If one payout fails, we return that money to
+    your balance. The other payouts still continue.
+  </Step>
+  <Step title="You see the results">
+    You can check the status at any time. If you gave us a `callback_url`, we
+    also send the final result to your server.
+  </Step>
+</Steps>
+
+<Note>Each payout must be at least **GMD 10**.</Note>
+
+## Send a bulk payout
+
+Send a `POST` request with your list.
+
+<CodeGroup>
+
+```typescript nodejs
+const bulkPayout = await modempay.transfers.bulkPayout({
+  payouts: [
+    {
+      amount: 1000,
+      network: "wave",
+      beneficiary_name: "Fatoumata Sanyang",
+      account_number: "7900123",
+      currency: "GMD",
+    },
+    {
+      amount: 2500,
+      network: "afrimoney",
+      beneficiary_name: "Ebrima Jobe",
+      account_number: "2100456",
+      currency: "GMD",
+    },
+    {
+      amount: 500,
+      network: "wave",
+      beneficiary_name: "Isatou Ceesay",
+      account_number: "5600879",
+      currency: "GMD",
+    },
+  ],
+  batch_reference: "batch-20240601-demo",
+});
+```
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/transfers/bulk-transfers \
+  -H "Authorization: Bearer sk_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "payouts": [
+      {
+        "amount": 1000,
+        "network": "wave",
+        "beneficiary_name": "Fatoumata Sanyang",
+        "account_number": "7900123",
+        "currency": "GMD"
+      },
+      {
+        "amount": 2500,
+        "network": "afrimoney",
+        "beneficiary_name": "Ebrima Jobe",
+        "account_number": "2100456",
+        "currency": "GMD"
+      },
+      {
+        "amount": 500,
+        "network": "wave",
+        "beneficiary_name": "Isatou Ceesay",
+        "account_number": "5600879",
+        "currency": "GMD"
+      }
+    ],
+    "batch_reference": "batch-20240601-demo"
+  }'
+```
+
+</CodeGroup>
+
+### What to send
+
+<ParamField body="payouts" type="array" required>
+  Your list of payouts. Each one needs:
+
+  <Expandable title="payout fields">
+    <ParamField body="amount" type="number" required>
+      How much money to send. At least 10 GMD.
+    </ParamField>
+    <ParamField body="network" type="string" required>
+      Where the money goes. Use `wave` or `afrimoney`.
+    </ParamField>
+    <ParamField body="beneficiary_name" type="string" required>
+      The full name of the person getting the money.
+    </ParamField>
+    <ParamField body="account_number" type="string" required>
+      The person's mobile money number. 7 digits.
+    </ParamField>
+    <ParamField body="currency" type="string" required>
+      Always `GMD`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="batch_reference" type="string" required>
+  Your own name for this list. Use a name you will remember, like
+  `salaries-july-2026`.
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  Optional. A link to your server. We send the final result there when we
+  finish. Must start with `https`.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Optional. Any extra notes you want to keep with this batch.
+</ParamField>
+
+## Check a bulk payout
+
+Use the `id` to see how the batch is going.
+
+<CodeGroup>
+
+```typescript nodejs
+const bulkPayout = await modempay.transfers.retrieveBulkPayout(
+  "e7b2c1a0-4f3d-4e2a-9b1c-2d3e4f5a6b7c",
+);
+```
+
+```bash cURL
+curl https://api.modempay.com/v1/transfers/bulk-transfers/e7b2c1a0-4f3d-4e2a-9b1c-2d3e4f5a6b7c \
+  -H "Authorization: Bearer sk_live_xxx"
+```
+
+</CodeGroup>
+
+### What you get back
+
+```json
+{
+  "id": "e7b2c1a0-4f3d-4e2a-9b1c-2d3e4f5a6b7c",
+  "business_id": "219a9b8b-d80e-4379-8c4e-40e3cdd8ec3d",
+  "account_id": "f46f9d96-41e3-44d5-a102-4658bf419ad1",
+  "test_mode": false,
+  "status": "completed",
+  "batch_reference": "batch-20240601-demo",
+  "count": 3,
+  "progress": 3,
+  "success_count": 3,
+  "failure_count": 0,
+  "total_chargeable_amount": 4060,
+  "total_fees": 60,
+  "callback_url": "https://example.com/webhooks/modempay",
+  "metadata": {},
+  "payouts": [ ... ]
+}
+```
+
+<ResponseField name="status" type="string">
+  Where the batch is now. See the table below.
+</ResponseField>
+
+<ResponseField name="count" type="number">
+  How many payouts are in the batch.
+</ResponseField>
+
+<ResponseField name="progress" type="number">
+  How many payouts we have worked on so far. When `progress` is the same as
+  `count`, the batch is done.
+</ResponseField>
+
+<ResponseField name="success_count" type="number">
+  How many payouts were sent with no problem.
+</ResponseField>
+
+<ResponseField name="failure_count" type="number">
+  How many payouts failed. Money from failed payouts goes back to your balance.
+</ResponseField>
+
+<ResponseField name="total_chargeable_amount" type="number">
+  The full amount we took from your balance, with fees.
+</ResponseField>
+
+<ResponseField name="total_fees" type="number">
+  The total fees for this batch.
+</ResponseField>
+
+<ResponseField name="payouts" type="array">
+  The list of payouts in this batch. Each one has its own status.
+</ResponseField>
+
+### Status meanings
+
+| Status                | What it means                                             |
+| --------------------- | --------------------------------------------------------- |
+| `pending`             | We got your list. We have not started yet.                |
+| `in-progress`         | We are sending the payouts now.                           |
+| `completed`           | Every payout was sent.                                    |
+| `failed`              | Every payout failed. All money went back to your balance. |
+| `partially_completed` | Most payouts were sent. Some failed.                      |
+| `partially_failed`    | Most payouts failed. Some were sent.                      |
+
+<Tip>
+  Money from failed payouts always goes back to your payout balance. Check
+  `failure_count` to see how many failed. Then look at each payout in the list
+  to see which ones failed, fix them, and send them again.
+</Tip>
+
+## Ways to use it
+
+### Pay salaries
+
+Pay your whole team with one request. Put every worker on the list. Use a clear name like `salaries-july-2026`. When the status is `completed`, everyone is paid.
+
+### Pay winnings
+
+Send winnings to many players at once. Add a `callback_url` so your system knows when we finish. Use `metadata` to save the game or draw ID.
+
+### Pay agents
+
+At the end of the week, put all agent payments in one list and send it. Use the check endpoint to show each agent their payment status in your app.
+
+### Refund customers
+
+Need to refund many people, for example after a cancelled event? Put all the refunds in one list instead of sending them one by one.
+
+## Good to know
+
+- **Check your balance first.** Your payout balance must cover the full list plus fees. If it is not enough, we reject the whole list.
+- **One bad item stops the list.** We check every item before we start. If one item has a wrong account number or an amount below 10 GMD, we reject the whole list and send nothing. Fix the item and try again.
+- **Failed payouts are refunded.** If a payout fails while we are sending it, the money goes back to your balance. You do not lose it.
+- **Check any time.** You do not have to wait for the callback. Just call the check endpoint and compare `progress` with `count`.

@@ -54,7 +54,8 @@
             "pages": [
               "documentation/payouts/overview",
               "documentation/payouts/mobile-money",
-              "documentation/payouts/fees"
+              "documentation/payouts/fees",
+              "documentation/payouts/bulk-payout"
             ]
           },
           {
