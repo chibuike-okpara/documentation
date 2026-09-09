@@ -70,14 +70,14 @@ const event = modempay.webhooks.composeEventDetails(
 ```
 ```python python-sdk
 event = modem_pay.webhooks.compose_event_details(
-    payload, xSignatureHeader, yourSecretKey
+    payload, xSignatureHeader, hashed_secret_key
 )
 ```
 ```php php-sdk
 $event = $modemPay->webhooks()->composeEventDetails(
     $payload,
     $xSignatureHeader,
-    $yourSecretKey
+    $hashed_secret_key
 );
 ```
 
