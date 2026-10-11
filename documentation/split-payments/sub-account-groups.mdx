@@ -67,6 +67,19 @@ Each item in `members`:
 | `percentage`     | number | No       | This member's share in **this group**, greater than 0 and at most 100, up to 2 decimals. If left out, the sub-account's own `percentage` is used. |
 
 <CodeGroup>
+```typescript nodejs
+const group = await modempay.subAccountGroups.create({
+  name: "Marketplace order split",
+  description: "Seller and rider",
+  members: [
+    { sub_account_id: "5bfcc08....810b", percentage: 30 },
+    { sub_account_id: "a91e2c4....77d0", percentage: 40 },
+  ],
+});
+
+console.log(group.id); // pass this as sub_account_group on payment intents
+
+````
 ```bash cURL
 curl -X POST https://api.modempay.com/v1/sub-account-groups \
   -H "Authorization: Bearer sk_test_..." \
@@ -79,7 +92,8 @@ curl -X POST https://api.modempay.com/v1/sub-account-groups \
       { "sub_account_id": "a91e2c4....77d0", "percentage": 40 }
     ]
   }'
-```
+````
+
 </CodeGroup>
 
 Response (`201`):
@@ -129,10 +143,17 @@ Response (`201`):
 
 Returns the group with its members and their sub-account details.
 
+<CodeGroup>
+  ```typescript nodejs 
+const group = await modempay.subAccountGroups.retrieve("c3d1f0a....e21f"); 
+```
+
 ```bash cURL
 curl https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
-  -H "Authorization: Bearer sk_test_..."
+ -H "Authorization: Bearer sk_test_..."
 ```
+
+</CodeGroup>
 
 ## List groups
 
@@ -140,15 +161,25 @@ curl https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
 
 | Query parameter | Default | Description                                     |
 | --------------- | ------- | ----------------------------------------------- |
-| `term`          | —       | Search by name.                                 |
+| `term`          | —       | Search by name. In Node, pass it as `search`.   |
 | `active`        | —       | `true` or `false` to filter. Leave out for all. |
 | `limit`         | 15      | How many to return, up to 100.                  |
 | `offset`        | 0       | How many to skip, for paging.                   |
 
+<CodeGroup>
+```typescript nodejs
+const { data, meta } = await modempay.subAccountGroups.list({
+  search: "marketplace",
+  active: true,
+  limit: 15,
+  offset: 0,
+});
+```
 ```bash cURL
-curl "https://api.modempay.com/v1/sub-account-groups?active=true&limit=15&offset=0" \
+curl "https://api.modempay.com/v1/sub-account-groups?term=marketplace&active=true&limit=15&offset=0" \
   -H "Authorization: Bearer sk_test_..."
 ```
+</CodeGroup>
 
 Response: `{ "data": [ ...groups ], "meta": { "total": 3 } }`
 
@@ -164,6 +195,16 @@ Send only what you want to change: `name`, `description`, `active` or `members`.
   100% limit.
 </Warning>
 
+<CodeGroup>
+```typescript nodejs
+const group = await modempay.subAccountGroups.update("c3d1f0a....e21f", {
+  members: [
+    { sub_account_id: "5bfcc08....810b", percentage: 30 },
+    { sub_account_id: "a91e2c4....77d0", percentage: 35 },
+    { sub_account_id: "e7b4d19....03ac", percentage: 10 },
+  ],
+});
+```
 ```bash cURL
 curl -X PUT https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
   -H "Authorization: Bearer sk_test_..." \
@@ -176,6 +217,7 @@ curl -X PUT https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
     ]
   }'
 ```
+</CodeGroup>
 
 Changes apply to **payments completed after the update**. Completed payments keep the split they were made with.
 
@@ -183,10 +225,18 @@ Changes apply to **payments completed after the update**. Completed payments kee
 
 `DELETE /v1/sub-account-groups/:id`
 
+<CodeGroup>
+  ```typescript nodejs 
+  const group = await modempay.subAccountGroups.delete("c3d1f0a....e21f");
+  console.log(group.active); // false 
+```
+
 ```bash cURL
 curl -X DELETE https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
-  -H "Authorization: Bearer sk_test_..."
+ -H "Authorization: Bearer sk_test_..."
 ```
+
+</CodeGroup>
 
 This **deactivates** the group rather than deleting it, so past payments still show which group they used. Returns the group with `"active": false`. To use it again, update it with `"active": true`.
 
