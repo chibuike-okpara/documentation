@@ -2,19 +2,54 @@
 title: Overview
 ---
 
-With **Split Payments**, you can share the settlement of a transaction with one or more sub-accounts. This allows you to automatically distribute revenue between multiple parties without manual transfers or spreadsheets.
+**Split Payments** share each payment between you and your partners automatically. No manual transfers, no spreadsheets.
 
-Whether you’re running a marketplace, school, agency, or any business that needs to share revenue, Split Payments makes it easy to:
+Useful for marketplaces, schools, agencies, or any business that shares revenue.
 
-* **Create sub-accounts:** Assign each recipient their own account within Modem Pay.
-* **Set revenue percentages:** Decide what portion of a transaction each sub-account receives.
-* **Automate settlements:** Modem Pay calculates and distributes payouts according to the defined splits.
+## The building blocks
 
-**Example:**
-A customer pays **1,000 GMD**. You have a sub-account set up to receive **10%**, and your main business account receives **90%**. After the transaction is processed:
+<CardGroup cols={2}>
+  <Card
+    title="Sub-accounts"
+    icon="user"
+    href="/documentation/split-payments/sub-accounts"
+  >
+    One partner: who gets paid, where, and what percentage.
+  </Card>
+  <Card
+    title="Sub-account groups"
+    icon="users"
+    href="/documentation/split-payments/sub-account-groups"
+  >
+    Several partners on one payment, each with its own percentage.
+  </Card>
+</CardGroup>
 
-* Main account balance: 900 GMD
-* Sub-account balance: 100 GMD
+## How it works
 
-This removes the headache of manual revenue sharing, ensures transparency, and keeps your business and partners’ payouts accurate and timely.
+<Steps>
+  <Step title="Set up your partners">
+    Create a [sub-account](/documentation/split-payments/sub-accounts) for each
+    partner. To pay several on one payment, put them in a
+    [group](/documentation/split-payments/sub-account-groups).
+  </Step>
+  <Step title="Attach to a payment">
+    Pass `sub_account` or `sub_account_group` when you [create a payment
+    intent](/documentation/split-payments/initialize-payment).
+  </Step>
+  <Step title="Get paid">
+    When the customer pays, each partner's share goes to their balance and the
+    rest goes to yours.
+  </Step>
+</Steps>
 
+## Example
+
+A customer pays **1,000 GMD** and the customer covers the fee, so you receive the full 1,000 GMD.
+
+|          | One sub-account (10%) | Group (30% + 40%) |
+| -------- | --------------------- | ----------------- |
+| Partners | 100 GMD               | 300 GMD + 400 GMD |
+| You      | 900 GMD               | 300 GMD           |
+
+If your business pays the fee instead, the percentages apply to what's left after the fee. See [how shares are calculated](/documentation/split-payments/sub-accounts#how-the-share-is-calculated).

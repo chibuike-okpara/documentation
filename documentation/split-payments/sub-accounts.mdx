@@ -2,67 +2,113 @@
 title: Sub-Accounts
 ---
 
-Sub-accounts are the backbone of **Split Payments**. They define who receives a portion of a transaction and where that money should go. Each sub-account can have a **percentage of the transaction** and a **settlement destination**.
+A **sub-account** is a partner who receives part of your payments. You set two things on it:
 
-With sub-accounts, you can:
+- **Who gets paid:** a mobile money account (`settlement_code` + `account_number`)
+- **How much:** a `percentage` of each payment it is attached to
 
-* Automate revenue sharing
-* Maintain a transparent audit trail for settlements
-* Track balances for each partner before actual payout
+When a payment with a sub-account completes, Modem Pay moves that percentage into the sub-account's balance and keeps the rest in yours. No manual transfers.
 
-<Note>
-The **minimum split amount** per transaction is **1 GMD**.  
-Before a sub-account can receive a payout, it must have accumulated at least **10 GMD** in its balance. This ensures efficient settlement and reduces transaction costs.
-</Note>
+<Tip>
+  Need to pay **several partners** from one payment? Put them in a [Sub-Account
+  Group](/documentation/split-payments/sub-account-groups).
+</Tip>
+
+## How it works
+
+<Steps>
+  <Step title="Create a sub-account">
+    Give it a name, a percentage and where its money should go. You get back an
+    `id`.
+  </Step>
+  <Step title="Attach it to a payment">
+    Pass the `id` as `sub_account` when you [create a payment
+    intent](/documentation/split-payments/initialize-payment).
+  </Step>
+  <Step title="Customer pays">
+    The sub-account's share is added to its balance. The rest goes to your
+    balance.
+  </Step>
+  <Step title="Sub-account is settled">
+    Once its balance reaches **10 GMD**, it can be paid out to its account.
+  </Step>
+</Steps>
+
+### How the share is calculated
+
+The percentage is applied to **what you receive from the payment**, after Modem Pay's fee if your business pays the fee. If the customer pays the fee, it is applied to the full amount.
+
+Shares are rounded to the nearest whole GMD, and every share is at least **1 GMD**.
+
+| Payment   | Fee paid by | Modem Pay fee                          | You receive | Sub-account (10%) | Your balance |
+| --------- | ----------- | -------------------------------------- | ----------- | ----------------- | ------------ |
+| 1,000 GMD | Business    | 20 GMD                                 | 980 GMD     | **98 GMD**        | **882 GMD**  |
+| 1,000 GMD | Customer    | 20 GMD (added to the customer's total) | 1,000 GMD   | **100 GMD**       | **900 GMD**  |
+
+<Note>Fees shown are examples. Your actual fee depends on your pricing.</Note>
 
 ---
 
-## Create a Sub-Account
+## Create a sub-account
 
-Creates a new recipient account that can be used in split payments.
+`POST /v1/sub-accounts`
+
+| Field             | Type   | Required | Description                                               |
+| ----------------- | ------ | -------- | --------------------------------------------------------- |
+| `business_name`   | string | Yes      | Name of the partner. Shown on your dashboard and reports. |
+| `percentage`      | number | Yes      | Share of each payment, greater than 0 and at most 100.    |
+| `settlement_code` | string | Yes      | Where the money is settled, e.g. `wave` or `afrimoney`.   |
+| `account_number`  | string | Yes      | The partner's account number on that provider.            |
 
 <CodeGroup>
 ```typescript nodejs
 const subAccount = await modempay.subAccounts.create({
   business_name: "Hail-Ma",
-  percentage: 10,             // Revenue share (integer %)
-  settlement_code: "afrimoney", // Settlement provider (wave or afrimoney)
-  account_number: 7012345,      // Account to receive funds
+  percentage: 10,
+  settlement_code: "afrimoney",
+  account_number: "7012345",
 });
-```
+
+console.log(subAccount.id); // keep this, you'll attach it to payments
+
+````
 ```python python
 sub_account = mp.sub_accounts.create(
     params={
         "business_name": "Hail-Ma",
         "percentage": 10,
         "settlement_code": "afrimoney",
-        "account_number": 7012345,
+        "account_number": "7012345",
     }
 )
-```
+
+print(sub_account["id"])
+````
+
 ```bash cURL
 curl -X POST https://api.modempay.com/v1/sub-accounts \
   -H "Authorization: Bearer sk_test_..." \
   -H "Content-Type: application/json" \
   -d '{
-      "business_name": "Hail-Ma",
-      "percentage": 10,
-      "settlement_code": "afrimoney",
-      "account_number": 7012345,
-    }'
+    "business_name": "Hail-Ma",
+    "percentage": 10,
+    "settlement_code": "afrimoney",
+    "account_number": "7012345"
+  }'
 ```
+
 </CodeGroup>
 
-**Notes & Best Practices:**
+<Warning>
+  Double-check `account_number`. A wrong number means the sub-account's payout
+  fails or goes to the wrong person.
+</Warning>
 
-* Ensure the `percentage` is appropriate; total splits should not exceed 100%.
-* The `settlement_code` must match an active payment provider integrated with Modem Pay.
-* Keep the `account_number` accurate to avoid failed settlements.
-* You can create multiple sub-accounts and reuse them across payment intents.
+## Retrieve a sub-account
 
-## Retrieve a Sub-Account
+`GET /v1/sub-accounts/:id`
 
-Fetch details for a specific sub-account using its unique ID. Useful for confirming configuration or checking balances.
+Returns the sub-account, including its current `balance`.
 
 <CodeGroup>
 ```typescript nodejs
@@ -80,78 +126,102 @@ curl -X GET https://api.modempay.com/v1/sub-accounts/5bfcc08....810b \
   -H "Authorization: Bearer sk_test_..." \
   -H "Content-Type: application/json"
 ```
+
 </CodeGroup>
 
-## List All Sub-Accounts
+## List sub-accounts
 
-Get a list of all sub-accounts associated with your business. This is helpful for dashboards or automated scripts.
+`GET /v1/sub-accounts`
+
+| Query parameter | Default | Description                   |
+| --------------- | ------- | ----------------------------- |
+| `term`          | —       | Search by `business_name`.    |
+| `limit`         | 15      | How many to return.           |
+| `offset`        | 0       | How many to skip, for paging. |
 
 <CodeGroup>
 ```typescript nodejs
-const allSubAccounts = await modempay.subAccounts.list();
-console.log(allSubAccounts);
+const { data, meta } = await modempay.subAccounts.list();
+console.log(meta.total);
 ```
 ```python python
-all_sub_accounts = mp.sub_accounts.list()
-print(all_sub_accounts)
+result = mp.sub_accounts.list()
+print(result["meta"]["total"])
 ```
 ```bash cURL
-curl -X GET https://api.modempay.com/v1/sub-accounts?term=""&limit=15&offset=0 \
-  -H "Authorization: Bearer sk_test_..." \
-  -H "Content-Type: application/json"
+curl "https://api.modempay.com/v1/sub-accounts?term=hail&limit=15&offset=0" \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-**Notes:**
+Response:
 
-* Can be filtered by search term.
-* Supports pagination using `offset` and `limit` parameters
-* Returns pagination info if there are many sub-accounts.
+```json
+{
+  "data": [
+    {
+      "id": "5bfcc08....810b",
+      "business_name": "Hail-Ma",
+      "percentage": 10,
+      "balance": 98,
+      "active": true
+    }
+  ],
+  "meta": { "total": 1 }
+}
+```
 
+## Update a sub-account
 
-## Update a Sub-Account
+`PUT /v1/sub-accounts/:id`
 
-Modify a sub-account’s properties like percentage share or settlement destination.
+Send only the fields you want to change: `percentage`, `account_number`, `settlement_code` or `active`.
 
 <CodeGroup>
 ```typescript nodejs
-const updatedSubAccount = await modempay.subAccounts.update("5bfcc08....810b", {
-  percentage: 15,         // Update revenue share
-  account_number: 7016789, // Update account number
+const updated = await modempay.subAccounts.update("5bfcc08....810b", {
+  percentage: 15,
+  account_number: "7016789",
 });
-console.log(updatedSubAccount);
 ```
 ```python python
-updated_sub_account = mp.sub_accounts.update(
+updated = mp.sub_accounts.update(
     "5bfcc08....810b",
-    {
-        "percentage": 15,         # Update revenue share
-        "account_number": 7016789 # Update account number
-    }
+    {"percentage": 15, "account_number": "7016789"},
 )
-print(updated_sub_account)
 ```
 ```bash cURL
 curl -X PUT https://api.modempay.com/v1/sub-accounts/5bfcc08....810b \
   -H "Authorization: Bearer sk_test_..." \
   -H "Content-Type: application/json" \
-  -d '{
-    "percentage": 15,
-    "account_number": 7016789
-  }'
+  -d '{ "percentage": 15, "account_number": "7016789" }'
 ```
 </CodeGroup>
 
-**Notes:**
-* You can update the fields: `active`, `percentage`, `account_number`, and `settlement_code`.
-* Updates take effect on future transactions, not on already processed ones.
-* Avoid reducing percentages that would make total splits exceed 100%.
+- Changes apply to **future payments only**. Completed payments keep the split they were made with.
+- Set `active` to `false` to pause a sub-account. New payment intents that use it are rejected.
+- Changing a sub-account's `percentage` does **not** change its share inside a [group](/documentation/split-payments/sub-account-groups). Groups store their own percentages.
+
+## Delete a sub-account
+
+`DELETE /v1/sub-accounts/:id`
+
+```bash cURL
+curl -X DELETE https://api.modempay.com/v1/sub-accounts/5bfcc08....810b \
+ -H "Authorization:Bearer sk_test_..."
+```
+
+A sub-account can only be deleted when its balance is **0**. Otherwise you get a `400`. To stop using one that still has money, set `active` to `false` instead.
 
 ---
 
-## Additional Tips
+## Rules at a glance
 
-* **Balances:** Each sub-account maintains an internal balance until settlement occurs.
-* **Audit:** Always store sub-account IDs and percentages used per payment intent to keep your records consistent.
-* **Multiple Sub-Accounts:** Currently, a payment intent supports one sub-account. Future updates will allow multiple sub-accounts per transaction.
-
+| Rule                         | Value                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| Percentage                   | Greater than 0, at most 100                                                  |
+| Smallest share per payment   | 1 GMD                                                                        |
+| Rounding                     | Nearest whole GMD                                                            |
+| Balance needed before payout | 10 GMD                                                                       |
+| Sub-accounts per payment     | 1 (use a [group](/documentation/split-payments/sub-account-groups) for more) |
+| Test vs live                 | Test-mode sub-accounts only work with test keys, and live with live          |

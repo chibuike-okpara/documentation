@@ -1,0 +1,226 @@
+---
+title: Sub-Account Groups
+---
+
+A **sub-account group** lets one payment pay **several partners at once**. You put existing [sub-accounts](/documentation/split-payments/sub-accounts) in a group, give each one a percentage, and attach the group to a payment.
+
+Good for: a marketplace paying a seller and a delivery rider, a school sharing fees between departments, an agency paying several collaborators.
+
+## How it works
+
+<Steps>
+  <Step title="Create the sub-accounts">
+    Each partner needs a
+    [sub-account](/documentation/split-payments/sub-accounts#create-a-sub-account)
+    first.
+  </Step>
+  <Step title="Create a group">
+    List the sub-accounts and the percentage each one gets. The percentages must
+    add up to **100% or less**.
+  </Step>
+  <Step title="Attach the group to a payment">
+    Pass the group's `id` as `sub_account_group` when you [create a payment
+    intent](/documentation/split-payments/initialize-payment).
+  </Step>
+  <Step title="Customer pays">
+    Every member's share goes to its balance. Whatever is left goes to your
+    balance.
+  </Step>
+</Steps>
+
+### Example
+
+A customer pays 1,000 GMD. Your business pays a 20 GMD fee, so you receive **980 GMD**. Your group has two members:
+
+| Member              | Percentage | Share of 980 GMD |
+| ------------------- | ---------- | ---------------- |
+| Seller              | 30%        | **294 GMD**      |
+| Rider               | 40%        | **392 GMD**      |
+| You (the remainder) | 30%        | **294 GMD**      |
+
+Shares are worked out the same way as for a single sub-account: on what you receive after the fee if your business pays it (the full amount if the customer pays), rounded to the nearest whole GMD, at least **1 GMD** each.
+
+<Note>
+  On very small payments, the 1 GMD minimum and rounding could add up to more
+  than the payment. When that happens, the largest shares are reduced so the
+  members never get more than the payment itself.
+</Note>
+
+---
+
+## Create a group
+
+`POST /v1/sub-account-groups`
+
+| Field         | Type    | Required | Description                                             |
+| ------------- | ------- | -------- | ------------------------------------------------------- |
+| `name`        | string  | Yes      | Up to 120 characters. Must be unique among your groups. |
+| `description` | string  | No       | A note for yourself.                                    |
+| `members`     | array   | Yes      | 1 to 50 members (see below).                            |
+| `active`      | boolean | No       | Defaults to `true`.                                     |
+
+Each item in `members`:
+
+| Field            | Type   | Required | Description                                                                                                                                       |
+| ---------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sub_account_id` | string | Yes      | ID of an active sub-account. Each one can appear only once.                                                                                       |
+| `percentage`     | number | No       | This member's share in **this group**, greater than 0 and at most 100, up to 2 decimals. If left out, the sub-account's own `percentage` is used. |
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.modempay.com/v1/sub-account-groups \
+  -H "Authorization: Bearer sk_test_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Marketplace order split",
+    "description": "Seller and rider",
+    "members": [
+      { "sub_account_id": "5bfcc08....810b", "percentage": 30 },
+      { "sub_account_id": "a91e2c4....77d0", "percentage": 40 }
+    ]
+  }'
+```
+</CodeGroup>
+
+Response (`201`):
+
+```json
+{
+  "id": "c3d1f0a....e21f",
+  "name": "Marketplace order split",
+  "description": "Seller and rider",
+  "active": true,
+  "members": [
+    {
+      "sub_account_id": "5bfcc08....810b",
+      "percentage": "30.00",
+      "sub_account": {
+        "id": "5bfcc08....810b",
+        "business_name": "Seller",
+        "settlement_code": "wave",
+        "account_number": "7012345",
+        "active": true
+      }
+    },
+    {
+      "sub_account_id": "a91e2c4....77d0",
+      "percentage": "40.00",
+      "sub_account": {
+        "id": "a91e2c4....77d0",
+        "business_name": "Rider",
+        "settlement_code": "afrimoney",
+        "account_number": "7016789",
+        "active": true
+      }
+    }
+  ]
+}
+```
+
+<Tip>
+  A member's percentage belongs to the group, not the sub-account. The same
+  sub-account can have 30% in one group and 50% in another, and changing the
+  sub-account's own percentage won't affect either group.
+</Tip>
+
+## Retrieve a group
+
+`GET /v1/sub-account-groups/:id`
+
+Returns the group with its members and their sub-account details.
+
+```bash cURL
+curl https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
+  -H "Authorization: Bearer sk_test_..."
+```
+
+## List groups
+
+`GET /v1/sub-account-groups`
+
+| Query parameter | Default | Description                                     |
+| --------------- | ------- | ----------------------------------------------- |
+| `term`          | —       | Search by name.                                 |
+| `active`        | —       | `true` or `false` to filter. Leave out for all. |
+| `limit`         | 15      | How many to return, up to 100.                  |
+| `offset`        | 0       | How many to skip, for paging.                   |
+
+```bash cURL
+curl "https://api.modempay.com/v1/sub-account-groups?active=true&limit=15&offset=0" \
+  -H "Authorization: Bearer sk_test_..."
+```
+
+Response: `{ "data": [ ...groups ], "meta": { "total": 3 } }`
+
+## Update a group
+
+`PUT /v1/sub-account-groups/:id`
+
+Send only what you want to change: `name`, `description`, `active` or `members`.
+
+<Warning>
+  `members` **replaces the whole list**. To add one partner, send all the
+  existing members plus the new one. The new list is checked again against the
+  100% limit.
+</Warning>
+
+```bash cURL
+curl -X PUT https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
+  -H "Authorization: Bearer sk_test_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "members": [
+      { "sub_account_id": "5bfcc08....810b", "percentage": 30 },
+      { "sub_account_id": "a91e2c4....77d0", "percentage": 35 },
+      { "sub_account_id": "e7b4d19....03ac", "percentage": 10 }
+    ]
+  }'
+```
+
+Changes apply to **payments completed after the update**. Completed payments keep the split they were made with.
+
+## Deactivate a group
+
+`DELETE /v1/sub-account-groups/:id`
+
+```bash cURL
+curl -X DELETE https://api.modempay.com/v1/sub-account-groups/c3d1f0a....e21f \
+  -H "Authorization: Bearer sk_test_..."
+```
+
+This **deactivates** the group rather than deleting it, so past payments still show which group they used. Returns the group with `"active": false`. To use it again, update it with `"active": true`.
+
+---
+
+## What happens when something changes mid-payment
+
+A payment intent is checked when it is created, but the split happens when the customer actually pays. If things change in between:
+
+| Situation                                        | What happens                                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Group is inactive when you create the intent     | Intent is rejected with `400`                                                                 |
+| Group is deactivated after the intent is created | Payment still succeeds; **you keep the full amount**                                          |
+| A member's sub-account is deactivated            | Payment still succeeds; that member's share **stays with you**, the others are paid as normal |
+| Group's members or percentages are updated       | The split uses the group as it is **when the payment completes**                              |
+
+The customer's payment never fails because of a group change.
+
+## Errors
+
+| Status | When                                                                                                                                                              |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | Percentages add up to more than 100%, a percentage is out of range, a sub-account is listed twice, a sub-account is inactive, no members, or more than 50 members |
+| `404`  | The group or one of the sub-accounts doesn't exist, or belongs to another business, account or mode                                                               |
+| `409`  | You already have a group with this name                                                                                                                           |
+
+## Rules at a glance
+
+| Rule                                        | Value                                                         |
+| ------------------------------------------- | ------------------------------------------------------------- |
+| Members per group                           | 1 to 50                                                       |
+| Total of percentages                        | At most 100%                                                  |
+| Percentage per member                       | Greater than 0, at most 100, up to 2 decimals                 |
+| Smallest share per member                   | 1 GMD                                                         |
+| Rounding                                    | Nearest whole GMD                                             |
+| Group and `sub_account` on the same payment | The group is used, `sub_account` is ignored                   |
+| Test vs live                                | Groups and their members must be in the same mode as your key |

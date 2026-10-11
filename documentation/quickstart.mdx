@@ -1,70 +1,151 @@
 ---
 title: Quickstart Guide
+description: Accept your first payment with Modem Pay in a few minutes.
 ---
 
-To get started with Modem Pay, follow these simple steps to set up and start collecting payments:
+Modem Pay lets you accept **Wave, Afrimoney, QMoney, APS, Yonna and card** payments through one integration. You build once, and your customers pay with whichever method they prefer.
 
-### 1. **Create an Account**
+This page takes you from sign-up to your first test payment.
 
-- **Sign Up**: Register on [Modem Pay's dashboard](https://merchant.modempay.com) to access your account and manage payments.
-  <iframe
-    width="100%"
-    height="425"
-    src="https://www.youtube.com/embed/xY_ysj40diU?si=5_BdUUsXZmfnIUQu"
-    title="YouTube video player"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    referrerpolicy="strict-origin-when-cross-origin"
-    allowfullscreen
-  ></iframe>
-- **API Keys**: Once registered, get your API keys from the dashboard for integrating and authenticating requests.
+## Before you start
 
-### 2. **Configure Integrations**
+| You need                        | Where to get it                                           |
+| ------------------------------- | --------------------------------------------------------- |
+| A Modem Pay account             | [Sign up on the dashboard](https://merchant.modempay.com) |
+| Your API keys                   | Dashboard, under API keys                                 |
+| A URL to send customers back to | Your website or app                                       |
 
-- **SDK Payment Intent**: For more control, use Modem Pay’s SDK to create and confirm payment intents programmatically.
+<Note>
+  Everything on this page works in **test mode**. No real money moves until you
+  [go live](#go-live).
+</Note>
 
-<CodeGroup>
+## Accept your first payment
 
-```javascript nodejs
-import ModemPay from "modem-pay";
+<Steps>
+  <Step title="Create your account">
+    Register on the [Modem Pay dashboard](https://merchant.modempay.com). This short video walks you through it:
 
-const modempay = new ModemPay("YOUR_MODEM_PAY_API_KEY");
+    <iframe
+      width="100%"
+      height="400"
+      src="https://www.youtube.com/embed/xY_ysj40diU?si=5_BdUUsXZmfnIUQu"
+      title="Creating a Modem Pay account"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
 
-const intent = await modempay.paymentIntents.create({ amount: 450 });
+  </Step>
 
-console.log(intent.data.payment_link);
-```
+  <Step title="Copy your API keys">
+    You get two kinds of keys from the dashboard:
 
-```python python
-from modempay import ModemPay
+    | Key | Starts with | Use it |
+    | --- | --- | --- |
+    | Secret key | `sk_test_` / `sk_live_` | On your **server only**, with the SDKs and API |
+    | Public key | `pk_test_` / `pk_live_` | In your **website**, with HTML Checkout |
 
-modem_pay = ModemPay(api_key="YOUR_MODEM_PAY_API_KEY")
+    <Warning>
+    Never put your secret key in a website, mobile app or public repository. Anyone with it can act on your account.
+    </Warning>
 
-intent = modem_pay.payment_intents.create(params={"amount": 450})
+  </Step>
 
-print(intent["data"]["payment_link"])
-```
+  <Step title="Create a payment">
+    From your server, create a **payment intent** with the amount to charge. Modem Pay returns a `payment_link`.
 
-```php php
-use ModemPay\ModemPay;
+    <CodeGroup>
+    ```javascript nodejs
+    import ModemPay from "modem-pay";
 
-$modemPay = new ModemPay('YOUR_MODEM_PAY_API_KEY');
+    const modempay = new ModemPay("sk_test_...");
 
-$payment = $modemPay->paymentIntents()->create(['amount' => 450]);
+    const intent = await modempay.paymentIntents.create({
+      amount: 450,
+      return_url: "https://yoursite.com/payment/success",
+      cancel_url: "https://yoursite.com/payment/cancelled",
+    });
 
-echo $payment->data->payment_link;
-```
+    console.log(intent.data.payment_link);
+    ```
 
-</CodeGroup>
+    ```python python
+    from modempay import ModemPay
 
-- **HTML Checkout**: Embed Modem Pay’s HTML Checkout into your site for a quick, low-code payment solution.
+    modem_pay = ModemPay(api_key="sk_test_...")
 
-Here's an example of how you'd implement HTML checkout:
+    intent = modem_pay.payment_intents.create(params={
+        "amount": 450,
+        "return_url": "https://yoursite.com/payment/success",
+        "cancel_url": "https://yoursite.com/payment/cancelled",
+    })
+
+    print(intent["data"]["payment_link"])
+    ```
+
+    ```php php
+    use ModemPay\ModemPay;
+
+    $modemPay = new ModemPay('sk_test_...');
+
+    $payment = $modemPay->paymentIntents()->create([
+        'amount' => 450,
+        'return_url' => 'https://yoursite.com/payment/success',
+        'cancel_url' => 'https://yoursite.com/payment/cancelled',
+    ]);
+
+    echo $payment->data->payment_link;
+    ```
+    </CodeGroup>
+
+    Amounts are in **GMD**, and the minimum is **10 GMD**.
+
+  </Step>
+
+  <Step title="Send your customer to pay">
+    Redirect the customer to the `payment_link`. They choose how to pay and complete the payment on Modem Pay's checkout.
+
+    When they finish, they come back to your `return_url`. If they cancel, they go to your `cancel_url`.
+
+  </Step>
+
+  <Step title="Confirm the payment with webhooks">
+    Add your webhook URL in the dashboard. Modem Pay notifies your server when a payment changes, for example `charge.succeeded` or `charge.cancelled`.
+
+    <Tip>
+    Mark orders as paid **from the webhook**, not from the redirect. Customers sometimes close the page before they get back to your `return_url`, but the webhook still arrives.
+    </Tip>
+
+  </Step>
+</Steps>
+
+That's it. You've accepted a test payment.
+
+---
+
+## Choose how to integrate
+
+The steps above use an **SDK**. If you'd rather not write server code, use **HTML Checkout**.
+
+|             | SDK / API                                                 | HTML Checkout                   |
+| ----------- | --------------------------------------------------------- | ------------------------------- |
+| Best for    | Apps and sites with a backend                             | Simple websites, quick launches |
+| Code needed | Server code                                               | A single HTML form              |
+| Key used    | Secret key (`sk_`)                                        | Public key (`pk_`)              |
+| Control     | Full: payment intents, split payments, transfers, refunds | Collect payments                |
+
+### HTML Checkout
+
+Add a form to your page that posts the payment details to Modem Pay. When the customer clicks **Pay Now**, they're taken to checkout.
+
+Try it here:
 
 <iframe
   height="400"
   width="100%"
-  title="Modem Pay Inline Payment"
+  title="Modem Pay HTML Checkout"
   src="https://codepen.io/mercury-sms/embed/WNVLZwe?default-tab=html%2Cresult"
   frameborder="0"
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
@@ -72,42 +153,89 @@ Here's an example of how you'd implement HTML checkout:
   allowfullscreen
 ></iframe>
 
-**Walkthrough**
+The form posts to `https://test.checkout.modempay.com/api/pay` with these fields:
 
-1. **Setting Up the Form**
+| Field            | Required    | Description                                      |
+| ---------------- | ----------- | ------------------------------------------------ |
+| `public_key`     | Yes         | Your public key (`pk_test_...` or `pk_live_...`) |
+| `amount`         | Yes         | Amount in GMD, at least 10                       |
+| `currency`       | No          | `GMD`                                            |
+| `return_url`     | Recommended | Where the customer goes after paying             |
+| `cancel_url`     | Recommended | Where the customer goes if they cancel           |
+| `customer_name`  | No          | Prefills checkout                                |
+| `customer_email` | No          | Prefills checkout                                |
+| `customer_phone` | No          | Prefills checkout                                |
+| `metadata`       | No          | Your own data, e.g. an order ID.                 |
 
-   When the user clicks **Pay Now**, the form submits the order details to Modem Pay's endpoint (`https://test.checkout.modempay.com/api/pay`), passing essential information like amount, customer details, and URLs for redirecting.
+Example of what Modem Pay receives:
 
-2. **Payload Format After Submission**
+```json
+{
+  "public_key": "pk_test_...",
+  "amount": "450",
+  "currency": "GMD",
+  "customer_name": "Zypheron Kade",
+  "customer_email": "usr@example.com",
+  "customer_phone": "7000001",
+  "return_url": "https://yoursite.com/payment/success",
+  "cancel_url": "https://yoursite.com/payment/cancelled",
+  "metadata": { "order_id": "1042" }
+}
+```
 
-   Once the form is submitted, the server receives the payment information in JSON format as shown below. Modem Pay processes this payload to initialize the payment.
-
-   ```json
-   {
-     "public_key": "pk_test_e073bbf9db47b09cebfdf2f7ec147d02116b69ea55135e1747a0bc8d47612f69",
-     "amount": "450",
-     "customer_name": "Zypheron Kade",
-     "customer_email": "usr@example.com",
-     "customer_phone": "7000001",
-     "cancel_url": "https://modempay.com",
-     "return_url": "https://modempay.com",
-     "currency": "GMD",
-     "metadata": { "source": "modem-html-test" }
-   }
-   ```
-
-3. **After Payment – Redirect and Webhooks**
-   - **Redirect URL**: Once the payment completes, the user is redirected to the `return_url` specified in the form, or if canceled, to the `cancel_url`.
-   - **Webhooks**: For real-time updates on the payment status, configure webhooks in Modem Pay’s dashboard. This allows your server to receive notifications for events like `charge.succeeded` or `charge.cancelled` so you can handle them as needed, such as updating the order status on your end.
-
-### 3. **Complete KYC**
-
-- **Identity Verification**: Before going live, complete Modem Pay’s KYC requirements from the dashboard to enable secure, compliant transactions.
-
-### 4. **Start Collecting Live Payments**
-
-- **Go Live**: Once KYC is approved, switch from test to live mode on your dashboard to start processing real transactions and collecting payments from your customers.
+Redirects and webhooks work exactly as in the SDK flow above.
 
 ---
 
-This setup provides both a quick and customizable payment solution for your business, with HTML Checkout for a rapid start and SDK Payment Intent for detailed control.
+## Go live
+
+When your test payments work:
+
+<Steps>
+  <Step title="Complete KYC">
+    Submit your business verification from the dashboard. This is required
+    before you can accept real payments.
+  </Step>
+  <Step title="Switch to live mode">
+    Once KYC is approved, switch to **live mode** in the dashboard and replace
+    your `test` keys with your `live` keys.
+  </Step>
+  <Step title="Run one real payment">
+    Make a small real payment and check that your webhook marks the order as
+    paid.
+  </Step>
+</Steps>
+
+<Note>
+  Test and live are kept separate. Payments and sub-accounts created in test
+  mode don't exist in live mode, and the reverse.
+</Note>
+
+## What's next
+
+<CardGroup cols={2}>
+  <Card
+    title="Split payments"
+    icon="arrows-split-up-and-left"
+    href="/documentation/split-payments/overview"
+  >
+    Share each payment with partners automatically.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/documentation/core/webhooks">
+    React to payments, refunds and transfers on your server.
+  </Card>
+  <Card
+    title="Transfers"
+    icon="paper-plane"
+    href="/documentation/payouts/overview"
+  >
+    Send money to mobile wallets and bank accounts.
+  </Card>
+  <Card
+    title="Refunds"
+    icon="rotate-left"
+    href="/documentation/payment-intents/refund"
+  >
+    Return money to a customer, in full or in part.
+  </Card>
+</CardGroup>

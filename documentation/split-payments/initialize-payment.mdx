@@ -2,33 +2,35 @@
 title: Initialize Split Payment
 ---
 
+To split a payment, attach a sub-account or a sub-account group when you create the **Payment Intent**. The split happens automatically when the customer pays.
 
-Once you’ve created a sub-account, you can attach it to a **Payment Intent** so that a portion of the transaction is automatically routed to the sub-account during settlement.
+| To pay           | Pass                | Example                          |
+| ---------------- | ------------------- | -------------------------------- |
+| One partner      | `sub_account`       | Your platform and one seller     |
+| Several partners | `sub_account_group` | A seller, a rider and a referrer |
 
-### Example Usage
+## Split with one sub-account
 
 <CodeGroup>
 ```javascript nodejs
 const paymentIntent = await modempay.paymentIntents.create({
-  amount: 450,
-  sub_account: "5bfcc08....810b" // Attach the sub-account ID here
+  amount: 1000,
+  sub_account: "5bfcc08....810b",
 });
-console.log(paymentIntent);
 ```
 ```python python
 payment_intent = modem_pay.payment_intents.create(params={
-    "amount": 450,
-    "sub_account": "5bfcc08....810b"  # Attach the sub-account ID here
+    "amount": 1000,
+    "sub_account": "5bfcc08....810b",
 })
-print(payment_intent)
 ```
 ```bash cURL
-cURL -X POST "https://api.modempay.com/v1/payments" \
+curl -X POST "https://api.modempay.com/v1/payments" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your_api_key>" \
   -d '{
     "data": {
-      "amount": 450,
+      "amount": 1000,
       "sub_account": "5bfcc08....810b",
       "from_sdk": false
     }
@@ -36,21 +38,60 @@ cURL -X POST "https://api.modempay.com/v1/payments" \
 ```
 </CodeGroup>
 
-**Notes:**
+The sub-account's `percentage` decides its share.
 
-* `sub_account` should be the ID of an existing sub-account you’ve created.
-* The `percentage` defined on the sub-account determines how much of the payment is routed to that account.
-* The remaining portion automatically goes to your main business account.
-* Currently, each Payment Intent supports **one sub-account**. Future updates will allow multiple sub-accounts per transaction.
+## Split with a group
 
-**Example Flow:**
+<CodeGroup>
+```javascript nodejs
+const paymentIntent = await modempay.paymentIntents.create({
+  amount: 1000,
+  sub_account_group: "c3d1f0a....e21f",
+});
+```
+```python python
+payment_intent = modem_pay.payment_intents.create(params={
+    "amount": 1000,
+    "sub_account_group": "c3d1f0a....e21f",
+})
+```
+```bash cURL
+curl -X POST "https://api.modempay.com/v1/payments" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your_api_key>" \
+  -d '{
+    "data": {
+      "amount": 1000,
+      "sub_account_group": "c3d1f0a....e21f",
+      "from_sdk": false
+    }
+  }'
+```
+</CodeGroup>
 
-1. Create a sub-account: `Moca`, 10% of transactions.
-2. Create a Payment Intent for 450 GMD and attach `Moca` as the sub-account.
-3. After the payment is processed:
+Each member gets the percentage set for it in the group.
 
-   * Main account receives 405 GMD
-   * Sub-account receives 45 GMD
+<Note>If you pass both, **the group wins** and `sub_account` is ignored.</Note>
 
-This setup ensures **automatic, transparent revenue sharing** without manual calculations.
+## What each party receives
 
+Shares are calculated on what you receive from the payment: after Modem Pay's fee if your business pays it, or the full amount if the customer pays it. Shares are rounded to the nearest whole GMD, with at least 1 GMD each.
+
+**Example:** a 1,000 GMD payment, your business pays a 20 GMD fee, so you receive 980 GMD.
+
+| Setup                                | Partners get      | Your balance |
+| ------------------------------------ | ----------------- | ------------ |
+| `sub_account` at 10%                 | 98 GMD            | 882 GMD      |
+| `sub_account_group` with 30% and 40% | 294 GMD + 392 GMD | 294 GMD      |
+
+## Before you create the intent
+
+The sub-account or group must:
+
+- Exist and be **active**
+- Belong to the same business and account as your API key
+- Be in the same mode as your key (test with test, live with live)
+
+If not, the intent is rejected with `400` and no payment is started.
+
+The payment intent and the transaction both show the `sub_account` or `sub_account_group` that was used, so you can match payments to splits in your own records.

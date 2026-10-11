@@ -41,11 +41,13 @@
             ]
           },
           {
-            "group": "DeFi",
+            "group": "Split Payments",
+            "expanded": false,
             "pages": [
-              "documentation/defi/accept-stablecoin-payments",
-              "documentation/defi/offramp",
-              "documentation/defi/offramp-resellers"
+              "documentation/split-payments/overview",
+              "documentation/split-payments/sub-accounts",
+              "documentation/split-payments/sub-account-groups",
+              "documentation/split-payments/initialize-payment"
             ]
           },
           {
@@ -69,6 +71,14 @@
             ]
           },
           {
+            "group": "DeFi",
+            "pages": [
+              "documentation/defi/accept-stablecoin-payments",
+              "documentation/defi/offramp",
+              "documentation/defi/offramp-resellers"
+            ]
+          },
+          {
             "group": "Core API Resources",
             "expanded": false,
             "pages": [
@@ -80,15 +90,6 @@
               "documentation/core/webhooks",
               "documentation/core/webhook-cli",
               "documentation/core/coupons"
-            ]
-          },
-          {
-            "group": "Split Payments",
-            "expanded": false,
-            "pages": [
-              "documentation/split-payments/overview",
-              "documentation/split-payments/sub-accounts",
-              "documentation/split-payments/initialize-payment"
             ]
           },
           {
