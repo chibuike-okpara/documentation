@@ -1,0 +1,301 @@
+---
+title: "Convert stablecoins to dalasi"
+sidebarTitle: "Convert to dalasi"
+description: "Send USDT or USDC and receive Gambian dalasi in your balance or a mobile money wallet. Also known as an off-ramp."
+---
+
+Converting turns stablecoins into dalasi (GMD). You create a conversion, we give
+you an address and the exact amount to send, and once the money arrives we pay
+out the dalasi to your Modem Pay balance or straight to a Wave or Afrimoney
+wallet.
+
+You can size a conversion either way:
+
+- **By the dalasi you want**, with `gmd_amount`: "I need 5,000 GMD, how much
+  USDT do I send?"
+- **By the stablecoin you have**, with `pay_amount`: "I have 100 USDC, how much
+  GMD do I get?"
+
+<Note>Conversions work in live mode only. Use a live API key.</Note>
+
+## How it works
+
+<Steps>
+  <Step title="Create a conversion">
+    Tell us the amount, the coin, the network and where the dalasi should go. We
+    lock the rate and return a payment address.
+  </Step>
+  <Step title="Send the stablecoin">
+    Send exactly `pay_amount` of `pay_currency` on `network` to `pay_address`
+    within **10 minutes**.
+  </Step>
+  <Step title="Receive the dalasi">
+    As soon as the payment is confirmed, we credit `gmd_amount` to your balance
+    or pay it to the mobile money wallet you chose.
+  </Step>
+</Steps>
+
+<Tip>
+  Want to show a price before committing? Use the [price
+  estimate](/documentation/stablecoins/price-estimates) endpoint. It returns the
+  same numbers without creating a payment address.
+</Tip>
+
+## Create a conversion
+
+`POST /v1/minting/offramp`
+
+Send **either** `gmd_amount` **or** `pay_amount`, not both.
+
+<ParamField body="gmd_amount" type="number">
+  The dalasi you want to receive. We work out how much stablecoin to send.
+</ParamField>
+
+<ParamField body="pay_amount" type="number">
+  The stablecoin amount you will send, in USD (for example `100` for 100 USDT).
+  We work out the dalasi you receive, after fees.
+</ParamField>
+
+<Info>
+  **Minimums depend on the network:** \$25 on Tron and \$5 on Arc, measured on
+  the amount sent. Requests must also be worth at least 400 GMD. Anything
+  smaller is rejected with a message stating the minimum.
+</Info>
+
+<ParamField body="pay_currency" type="string" default="USDT">
+  The coin you'll send: `USDT` or `USDC`.
+</ParamField>
+
+<ParamField body="network" type="string" default="TRC20">
+  The network you'll send on: `TRC20` (Tron) or `ARC`. Arc supports USDC only.
+  See [supported coins and
+  networks](/documentation/stablecoins/overview#supported-coins-and-networks).
+</ParamField>
+
+<ParamField body="destination" type="string" default="modempay_balance">
+  Where the dalasi goes: `modempay_balance` or `mobile_money`.
+</ParamField>
+
+<ParamField body="payout_method" type="object">
+  Required when `destination` is `mobile_money`. The wallet to pay.
+
+  <Expandable title="payout_method">
+    <ParamField body="network" type="string" required>
+      `wave` or `afrimoney`.
+    </ParamField>
+    <ParamField body="account_number" type="string" required>
+      The 7-digit wallet number, for example `7000000`.
+    </ParamField>
+    <ParamField body="account_name" type="string" required>
+      The name on the wallet (at least 3 characters).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  Where we send updates for this conversion. See [Updates](#updates-webhooks).
+</ParamField>
+
+<ParamField body="markup_config" type="object">
+  Only for resellers. See [Resell
+  conversions](/documentation/stablecoins/resellers).
+</ParamField>
+
+### Example: you want 5,000 GMD
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 5000,
+    "pay_currency": "USDT",
+    "network": "TRC20"
+  }'
+```
+
+```typescript nodejs
+const conversion = await modempay.offramp.create({
+  gmd_amount: 5000,
+  pay_currency: "USDT",
+  network: "TRC20",
+});
+```
+
+</CodeGroup>
+
+### Example: you have 100 USDC on Arc
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pay_amount": 100,
+    "pay_currency": "USDC",
+    "network": "ARC"
+  }'
+```
+
+```typescript nodejs
+const conversion = await modempay.offramp.create({
+  pay_amount: 100,
+  pay_currency: "USDC",
+  network: "ARC",
+});
+```
+
+</CodeGroup>
+
+The payment request is for exactly `100` USDC, and `gmd_amount` in the response
+tells you the dalasi you'll receive.
+
+### Example: pay the dalasi to a Wave wallet
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 5000,
+    "destination": "mobile_money",
+    "payout_method": {
+      "network": "wave",
+      "account_number": "7000000",
+      "account_name": "Awa Jallow"
+    }
+  }'
+```
+
+```typescript nodejs
+const conversion = await modempay.offramp.create({
+  gmd_amount: 5000,
+  destination: "mobile_money",
+  payout_method: {
+    network: "wave",
+    account_number: "7000000",
+    account_name: "Awa Jallow",
+  },
+});
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "id": "b7c93f02-1a4e-4d8c-9f31-2e6a5d8c41bb",
+  "reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX",
+  "status": "pending",
+  "gmd_amount": 7009,
+  "gmd_rate": 71.1425,
+  "fee": 1.47,
+  "fee_currency": "USD",
+  "pay_amount": 100,
+  "pay_currency": "USDC",
+  "network": "ARC",
+  "pay_address": "0x3158Fb72808f76A91a0FcDd0Ece7126265b69f3B",
+  "invoice_expires_at": "2026-01-01T00:10:00.000Z",
+  "actually_paid": 0,
+  "destination": "modempay_balance",
+  "payout_method": null,
+  "markup_share_usd": 0,
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+| Field                                     | What it means                                                                                        |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `pay_address`                             | Where to send the stablecoin.                                                                        |
+| `pay_amount` + `pay_currency` + `network` | Exactly what to send, and on which network.                                                          |
+| `gmd_amount`                              | The dalasi you receive once fully paid.                                                              |
+| `gmd_rate`                                | Dalasi per US dollar, locked for this conversion.                                                    |
+| `fee`                                     | Modem Pay's fee in USD, already included in `pay_amount`. On Tron it includes the $1.50 network fee. |
+| `invoice_expires_at`                      | Send before this time (10 minutes after creation).                                                   |
+| `actually_paid`                           | How much has arrived so far, in USD.                                                                 |
+
+## Statuses
+
+| Status      | Meaning                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| `pending`   | Created. Waiting for the stablecoin.                                                             |
+| `underpaid` | Part of the amount has arrived. We've credited that part and are waiting for the rest.           |
+| `paid`      | The full amount arrived. `gmd_amount` has been credited.                                         |
+| `overpaid`  | More than `pay_amount` arrived. `gmd_amount` has been credited. Contact support about the extra. |
+| `expired`   | Nothing (or not enough) arrived within 10 minutes.                                               |
+
+## Partial payments
+
+A payer may send less than `pay_amount`, or split it across several transfers.
+You don't lose anything:
+
+- Each transfer is credited as it arrives, in proportion. If half of
+  `pay_amount` arrives, you get half of `gmd_amount`.
+- When the rest arrives, you get the remainder, so the total is exactly
+  `gmd_amount`.
+- You never receive more than `gmd_amount` for a conversion.
+
+Follow progress with `status` and `actually_paid`, or wait for the
+[updates](#updates-webhooks) we send.
+
+<Warning>
+  Send the payment within 10 minutes. Money that arrives after the conversion
+  expires isn't converted automatically. Contact support with the `reference`
+  and it will be resolved manually.
+</Warning>
+
+## Look up a conversion
+
+`GET /v1/minting/ramps/{id}`
+
+```bash cURL
+curl https://api.modempay.com/v1/minting/ramps/b7c93f02-1a4e-4d8c-9f31-2e6a5d8c41bb \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Returns the same object as when you created it, with the latest `status`,
+`actually_paid` and a timeline in `events`.
+
+## Updates (webhooks)
+
+When money arrives, we send an update to your `callback_url` (and your
+dashboard webhook). The event name follows the status:
+
+| Event            | When                                         |
+| ---------------- | -------------------------------------------- |
+| `ramp.underpaid` | Part of the amount arrived and was credited. |
+| `ramp.paid`      | The full amount arrived and was credited.    |
+| `ramp.overpaid`  | More than the full amount arrived.           |
+
+The payload is the conversion object shown above. You can get several updates
+for one conversion as transfers come in, so match on `id` or `reference` and
+treat `actually_paid` as the running total. Expiry doesn't send an update; look
+the conversion up if you need to confirm it.
+
+To check an update really came from Modem Pay, see the
+[Webhooks guide](/documentation/core/webhooks).
+
+## If a mobile money payout fails
+
+When `destination` is `mobile_money`, the dalasi first lands in your Modem Pay
+balance and is then paid to the wallet. If the wallet payout fails (wrong
+number, provider outage), the dalasi **stays in your balance**. It's never
+lost, and you can pay it out again from the dashboard or the
+[Payouts API](/documentation/payouts/overview).
+
+## Good to know
+
+- The rate is locked when you create the conversion and doesn't change while it
+  waits for payment.
+- Fees are included in `pay_amount`. The `fee` field shows how much of it is
+  Modem Pay's: a percentage (capped at $2), plus the network fee on Tron.
+- With `pay_amount`, you receive the largest whole number of dalasi that
+  amount covers after fees. Any fraction under 1 GMD isn't credited.
+- Network values are case-insensitive: `ARC`, `arc` and `Arc` all work.

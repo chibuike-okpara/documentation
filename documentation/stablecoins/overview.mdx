@@ -1,0 +1,98 @@
+---
+title: "Stablecoins overview"
+sidebarTitle: "Overview"
+description: "Accept USDT and USDC, or convert them into dalasi, without handling wallets or blockchains yourself."
+---
+
+Stablecoins are digital dollars. One USDT or one USDC is meant to be worth one
+US dollar, so their value stays steady, unlike other cryptocurrencies. People
+hold them in crypto wallets and exchange apps, and can send them anywhere in
+seconds.
+
+Modem Pay lets you work with stablecoins without running any crypto
+infrastructure. We create the payment addresses, watch for the money, and
+settle you in dalasi (GMD).
+
+## What you can do
+
+<CardGroup cols={2}>
+  <Card title="Accept stablecoin payments" icon="cart-shopping" href="/documentation/stablecoins/accept-payments">
+    Charge a customer in USD and let them pay with USDT or USDC on a hosted
+    payment page.
+  </Card>
+  <Card title="Convert stablecoins to dalasi" icon="arrow-right-arrow-left" href="/documentation/stablecoins/convert-to-dalasi">
+    Send USDT or USDC and receive GMD in your balance or a mobile money wallet.
+    Also called an off-ramp.
+  </Card>
+  <Card title="Check prices first" icon="calculator" href="/documentation/stablecoins/price-estimates">
+    See how much GMD an amount is worth, or how much to send for a GMD amount,
+    before creating anything.
+  </Card>
+  <Card title="Resell conversions" icon="handshake" href="/documentation/stablecoins/resellers">
+    Offer conversions on your own platform and earn your own markup.
+  </Card>
+</CardGroup>
+
+## Supported coins and networks
+
+A stablecoin lives on a **network** (a blockchain). The same coin on two
+different networks is not interchangeable, so the coin and the network must
+always match what the payer's wallet sends.
+
+| Coin | Network | `network` value | Minimum conversion | Modem Pay network fee | Arrives in |
+|------|---------|-----------------|--------------------|-----------------------|------------|
+| USDT | Tron (TRC20) | `TRC20` | $25 | $1.50 | about 1 minute |
+| USDC | Arc | `ARC` | $5 | none | under 1 second |
+
+The minimums and network fee apply to [conversions to dalasi](/documentation/stablecoins/convert-to-dalasi).
+The **network fee** covers what it costs us to move the money on that
+network. It's added once per conversion and included in the amount to send.
+The payer's own wallet may also charge a small sending fee.
+
+<Tip>
+  For USDC, use **Arc**. It's Circle's own network, there's no network fee,
+  the minimum is lower, and payments are final in under a second.
+</Tip>
+
+<Warning>
+  **Sending on the wrong network can lose the money.** USDT sent on Ethereum to
+  a Tron address, or USDC sent on another network to an Arc address, will not
+  reach us. Always tell the payer both the coin **and** the network.
+</Warning>
+
+## Words you'll see
+
+<AccordionGroup>
+  <Accordion title="Stablecoin">
+    A digital currency designed to stay at the same value as a normal currency.
+    USDT and USDC both track the US dollar.
+  </Accordion>
+  <Accordion title="Network (blockchain)">
+    The system a stablecoin moves on, such as Tron or Arc. The payer chooses it
+    in their wallet when sending.
+  </Accordion>
+  <Accordion title="Payment address">
+    A one-time address we create for each payment, shown as `pay_address`. It
+    looks like `T…` on Tron and `0x…` on Arc. Only send the requested coin on
+    the requested network to it.
+  </Accordion>
+  <Accordion title="Off-ramp (conversion)">
+    Turning stablecoins into local money. In these docs we call it
+    **converting to dalasi**. The API paths still use the word `offramp`.
+  </Accordion>
+  <Accordion title="Rate">
+    How many dalasi you get for one US dollar (`gmd_rate`). It's locked when you
+    create a conversion, so price changes after that don't affect it.
+  </Accordion>
+  <Accordion title="Partial payment">
+    When less than the full amount arrives. We credit you for what arrived and
+    wait for the rest. See [Partial payments](/documentation/stablecoins/convert-to-dalasi#partial-payments).
+  </Accordion>
+</AccordionGroup>
+
+## Before you start
+
+- Stablecoin features work in **live mode only**. Use a live API key.
+- All stablecoin endpoints live under `https://api.modempay.com/v1/minting`.
+- Set a `callback_url`, or a webhook in your dashboard, so you hear about
+  payments as they arrive. See the [Webhooks guide](/documentation/core/webhooks).

@@ -1,0 +1,125 @@
+---
+title: "Resell conversions"
+sidebarTitle: "Resellers"
+description: "Offer stablecoin-to-dalasi conversions on your own platform and earn a markup."
+---
+
+If you run your own app or exchange desk, you can offer conversions to your
+users under your own brand and add a markup. Your user pays the conversion plus
+your markup; Modem Pay handles the stablecoin, the conversion and the payout,
+and credits your markup to your balance.
+
+<Note>
+  This page adds one field, `markup_config`, to a normal conversion. Everything
+  in [Convert stablecoins to dalasi](/documentation/stablecoins/convert-to-dalasi)
+  still applies.
+</Note>
+
+## How the price is built
+
+```
+pay_amount = conversion (gmd_amount at the rate) + Modem Pay fee + your markup
+```
+
+- The **conversion** and **fee** work exactly like a normal conversion.
+- Your **markup** is added on top. Your user pays it, and you keep it.
+
+## markup_config
+
+<ParamField body="markup_config" type="object">
+  <Expandable title="markup_config">
+    <ParamField body="type" type="string" required>
+      `fixed` for a flat USD amount, or `percentage` for a percent of the
+      converted amount.
+    </ParamField>
+    <ParamField body="value" type="number" required>
+      For `fixed`, USD (`4` means $4). For `percentage`, a percent (`2` means
+      2%).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Warning>
+  Your markup can be at most **10% of the converted amount**. A request above
+  that is rejected with the maximum allowed, so check small amounts carefully
+  when using a `fixed` markup.
+</Warning>
+
+## Example
+
+A 2% markup on a 5,000 GMD conversion paid to the user's Wave wallet:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gmd_amount": 5000,
+    "destination": "mobile_money",
+    "payout_method": {
+      "network": "wave",
+      "account_number": "7000000",
+      "account_name": "Awa Jallow"
+    },
+    "markup_config": { "type": "percentage", "value": 2 }
+  }'
+```
+
+```typescript nodejs
+const conversion = await modempay.offramp.create({
+  gmd_amount: 5000,
+  destination: "mobile_money",
+  payout_method: {
+    network: "wave",
+    account_number: "7000000",
+    account_name: "Awa Jallow",
+  },
+  markup_config: { type: "percentage", value: 2 },
+});
+```
+
+</CodeGroup>
+
+You can also size it by what the user sends, with `pay_amount` instead of
+`gmd_amount`. The markup comes out of that amount, and `gmd_amount` in the
+response shows what the user receives.
+
+### Response (markup fields)
+
+```json
+{
+  "gmd_amount": 5000,
+  "fee": 2.55,
+  "pay_amount": 74.05,
+  "pay_currency": "USDT",
+  "markup_share_usd": 1.4,
+  "markup_config": { "type": "percentage", "value": 2 },
+  "status": "pending"
+}
+```
+
+`pay_amount` includes your markup, and `markup_share_usd` is what you earn, in
+USD.
+
+<Tip>
+  Check the price your user will see with a
+  [full quote](/documentation/stablecoins/price-estimates#full-quote) before
+  creating the conversion.
+</Tip>
+
+## How you get paid
+
+- Your user's dalasi (`gmd_amount`) goes to their wallet or your balance, as
+  set by `destination`.
+- Your markup is credited to **your Modem Pay balance**, as a separate entry,
+  even when the user's dalasi goes to a mobile money wallet.
+- With partial payments, the user's dalasi and your markup are credited in the
+  same proportion as the money arrives, and complete together.
+
+## Good to know
+
+- The markup is locked when the conversion is created and doesn't change with
+  the rate.
+- The Modem Pay fee applies to the conversion as usual; your markup is yours.

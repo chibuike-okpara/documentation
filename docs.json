@@ -61,6 +61,16 @@
             ]
           },
           {
+            "group": "Stablecoins",
+            "pages": [
+              "documentation/stablecoins/overview",
+              "documentation/stablecoins/accept-payments",
+              "documentation/stablecoins/convert-to-dalasi",
+              "documentation/stablecoins/price-estimates",
+              "documentation/stablecoins/resellers"
+            ]
+          },
+          {
             "group": "Drop-ins",
             "pages": [
               "documentation/payments/overview",
@@ -68,14 +78,6 @@
               "documentation/payments/modem-inline",
               "documentation/payments/html-checkout",
               "documentation/payments/custom"
-            ]
-          },
-          {
-            "group": "DeFi",
-            "pages": [
-              "documentation/defi/accept-stablecoin-payments",
-              "documentation/defi/offramp",
-              "documentation/defi/offramp-resellers"
             ]
           },
           {
@@ -198,5 +200,19 @@
     "socials": {
       "linkedin": "https://linkedin.com/company/modempay"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/documentation/defi/offramp",
+      "destination": "/documentation/stablecoins/convert-to-dalasi"
+    },
+    {
+      "source": "/documentation/defi/offramp-resellers",
+      "destination": "/documentation/stablecoins/resellers"
+    },
+    {
+      "source": "/documentation/defi/accept-stablecoin-payments",
+      "destination": "/documentation/stablecoins/accept-payments"
+    }
+  ]
 }

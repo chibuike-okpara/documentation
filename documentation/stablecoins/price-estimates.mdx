@@ -1,0 +1,104 @@
+---
+title: "Price estimates"
+description: "See what a conversion will cost or pay out before creating it."
+---
+
+Use an estimate to show your user a price before they commit. An estimate uses
+the same rate, fees and limits as a real conversion, but creates nothing: no
+payment address, no record and no expiry clock.
+
+## Get an estimate
+
+`GET /v1/minting/offramp/estimate`
+
+Send **either** `gmd_amount` **or** `pay_amount`.
+
+<ParamField query="gmd_amount" type="number">
+  The dalasi you want to receive. Returns how much stablecoin to send.
+</ParamField>
+
+<ParamField query="pay_amount" type="number">
+  The stablecoin amount you'll send, in USD. Returns the dalasi you'll receive.
+</ParamField>
+
+<ParamField query="pay_currency" type="string" default="USDT">
+  `USDT` or `USDC`.
+</ParamField>
+
+<ParamField query="network" type="string" default="TRC20">
+  `TRC20` or `ARC`.
+</ParamField>
+
+<CodeGroup>
+
+```bash How much GMD for 50 USDC?
+curl "https://api.modempay.com/v1/minting/offramp/estimate?pay_amount=50&pay_currency=USDC&network=ARC" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```bash How much USDT for 5,000 GMD?
+curl "https://api.modempay.com/v1/minting/offramp/estimate?gmd_amount=5000&pay_currency=USDT&network=TRC20" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "gmd_amount": 3504,
+  "gmd_rate": 71.1425,
+  "effective_rate": 70.08,
+  "usd_amount": 49.26,
+  "fee": 0.74,
+  "fee_currency": "USD",
+  "pay_amount": 50,
+  "pay_currency": "USDC",
+  "network": "ARC",
+  "network_fee_estimate": "<$0.01",
+  "network_fee_usd": 0,
+  "min_amount_usd": 5,
+  "confirmation_time": "<1 sec",
+  "expires_at": "2026-01-01T00:05:00.000Z"
+}
+```
+
+| Field | What it means |
+|-------|---------------|
+| `gmd_amount` | Dalasi received. |
+| `pay_amount` | Stablecoin to send, fees included. |
+| `gmd_rate` | Dalasi per US dollar before the fee. |
+| `effective_rate` | Dalasi per US dollar after the fee (`gmd_amount ÷ pay_amount`). Use this when comparing prices. |
+| `usd_amount` | The dollar value converted, without the fee. |
+| `fee` | Modem Pay's fee, in USD, including any network fee. |
+| `network_fee_usd` | The flat network fee for this network ($1.50 on Tron, none on Arc). Already part of `fee`. |
+| `min_amount_usd` | The smallest amount you can send on this network. |
+| `network_fee_estimate` | Roughly what the payer's wallet charges to send on this network. Paid by the payer, not deducted by us. |
+| `expires_at` | How long to treat the price as fresh (5 minutes). |
+
+<Note>
+  An estimate doesn't hold the price. Rates move, so the conversion you create
+  afterwards can differ slightly. The amounts in the conversion response are
+  the ones that count.
+</Note>
+
+## Full quote
+
+`POST /v1/minting/offramp/quote` takes exactly the same body as
+[creating a conversion](/documentation/stablecoins/convert-to-dalasi#create-a-conversion),
+including `destination`, `payout_method` and `markup_config`, and returns the
+full conversion object without creating it. Use it to check a reseller markup
+or a mobile money payout before going live.
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/offramp/quote \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pay_amount": 100,
+    "pay_currency": "USDC",
+    "network": "ARC",
+    "markup_config": { "type": "percentage", "value": 2 }
+  }'
+```

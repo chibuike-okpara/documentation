@@ -1,0 +1,179 @@
+---
+title: "Accept stablecoin payments"
+sidebarTitle: "Accept payments"
+description: "Charge customers in USD and let them pay with USDT or USDC on a hosted page."
+---
+
+Create a payment request, send your customer to the hosted page, and we tell
+you when the money arrives. The customer picks the coin and network on the
+page, so you never handle wallets or addresses.
+
+<Note>Stablecoin payments work in live mode only. Use a live API key.</Note>
+
+## How it works
+
+<Steps>
+  <Step title="Create a payment request">
+    Tell us how much to collect, in USD or GMD. We return a `link`.
+  </Step>
+  <Step title="Send your customer to the link">
+    They choose USDT or USDC and a network (for example USDC on Arc), then pay
+    from their wallet.
+  </Step>
+  <Step title="Get notified">
+    We send a `charge.succeeded` update each time money arrives, with the
+    running total.
+  </Step>
+</Steps>
+
+## Create a payment request
+
+`POST /v1/minting/intents`
+
+<ParamField body="amount" type="number" required>
+  How much to collect. Minimum **5 USD** (or the GMD equivalent).
+</ParamField>
+
+<ParamField body="currency" type="string" default="USD">
+  `USD` or `GMD`. A GMD amount is converted to USD at the current rate, so the
+  request is always held in USD.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Your own data, such as an order number. Returned to you unchanged in every
+  update.
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  Where we send updates for this payment.
+</ParamField>
+
+<ParamField body="expires_at" type="string">
+  Optional deadline for the payment, in ISO 8601 format.
+</ParamField>
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/minting/intents \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 20,
+    "metadata": { "order_id": "ORD-1042" }
+  }'
+```
+
+```typescript nodejs
+const request = await modempay.quoteIntents.create({
+  amount: 20,
+  metadata: { order_id: "ORD-1042" },
+});
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "id": "6f1a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8",
+  "status": "pending",
+  "amount": 20,
+  "currency": "USD",
+  "metadata": { "order_id": "ORD-1042" },
+  "link": "https://checkout.modempay.com/pay/quote/6f1a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8",
+  "createdAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+Send your customer to `link`.
+
+## What the customer sees
+
+The hosted page lists the coins and networks we support, including USDT on
+Tron and USDC on Arc (see
+[supported coins and networks](/documentation/stablecoins/overview#supported-coins-and-networks)).
+After they choose, the page shows the exact amount, the address and a QR code,
+and updates as soon as the payment arrives.
+
+## Knowing when you've been paid
+
+A customer can pay in one transfer or several, and can pay less than the full
+amount. Two fields in each update tell you where things stand:
+
+| Field                         | Meaning                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| `payload.amount`              | Total received so far, in USD. Grows with each transfer.                 |
+| `payload.metadata.usd_amount` | The amount you asked for, in USD.                                        |
+| `payload.status`              | `partially_paid` until the total reaches `usd_amount`, then `completed`. |
+
+**The payment is complete when `status` is `completed`.**
+
+## Updates (webhooks)
+
+We send `charge.succeeded` every time money arrives.
+
+```json
+{
+  "event": "charge.succeeded",
+  "payload": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "status": "partially_paid",
+    "amount": 10,
+    "currency": "USD",
+    "payment_method": "ARC",
+    "reference": "MP-XXXXXXXX-XXXXXX-XXXXXXXX",
+    "metadata": {
+      "order_id": "ORD-1042",
+      "usd_amount": 20,
+      "gmd_rate": 74.8814,
+      "fee": 0.2,
+      "fee_currency": "USD",
+      "fee_bearer": "business",
+      "payment_history": [
+        {
+          "amount_paid_usd": 10,
+          "amount_paid_gmd": 748,
+          "timestamp": "2026-01-01T00:00:00.000Z"
+        }
+      ]
+    }
+  }
+}
+```
+
+Here \$10 of \$20 has arrived, so `status` is `partially_paid`. When the other
+$10 arrives you get another `charge.succeeded` with `amount: 20` and
+`status: "completed"`.
+
+`payment_method` is the network the customer paid on (`TRC20` or `ARC`).
+`payment_history` lists each transfer separately.
+
+<Warning>
+  You can receive several updates for the same payment. Match on the payment
+  `id` (or your own `metadata` reference), treat `amount` as a running total,
+  and make sure processing the same update twice doesn't double-count.
+</Warning>
+
+To check an update really came from Modem Pay, see the
+[Webhooks guide](/documentation/core/webhooks).
+
+## List and look up payment requests
+
+```bash List
+curl https://api.modempay.com/v1/minting/intents \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```bash Look up one
+curl https://api.modempay.com/v1/minting/intents/6f1a2b3c-4d5e-6f70-8192-a3b4c5d6e7f8 \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Checklist
+
+- Save the request `id` and your own reference in `metadata`.
+- Fulfil the order when an update arrives with `status: "completed"`.
+- Handle repeated updates for the same `id` safely.
+- Use `payment_history` if you need the individual transfers.
