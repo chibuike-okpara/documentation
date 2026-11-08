@@ -1,80 +1,103 @@
 ---
-title: Overview
+title: "Payouts"
+sidebarTitle: "Overview"
+description: "Send money from your Modem Pay balance to mobile wallets, one person or a thousand at a time."
 ---
 
-The Modem Pay Payouts API allows you to send funds from your business account to users, vendors, or other accounts. Payouts can be made via mobile money, internal (Modem Pay) transfers, or bank transfers (coming soon).
+Payouts (called **transfers** in the API) send money from your [payout balance](/documentation/core/balances) to a mobile money wallet. Use them for withdrawals, paying suppliers, salaries, winnings and refunds.
 
-Use cases include:
-- User withdrawals
-- Vendor payouts
-- Payroll and salary disbursements
+<CardGroup cols={2}>
+  <Card title="Send one payout" icon="paper-plane" href="/documentation/payouts/mobile-money">
+    Pay one Wave or Afrimoney wallet.
+  </Card>
+  <Card title="Send many at once" icon="users" href="/documentation/payouts/bulk-payout">
+    Up to 1,000 payouts in one request.
+  </Card>
+  <Card title="Check the fee first" icon="calculator" href="/documentation/payouts/fees">
+    Know the exact cost before you send.
+  </Card>
+  <Card title="Reverse a payout" icon="arrow-rotate-left" href="/documentation/payouts/reversals">
+    Pull back a Wave payout sent to the wrong person.
+  </Card>
+</CardGroup>
 
-### Payout Parameters
+## How a payout works
 
-Here’s the general shape of a transfer request:
+<Steps>
+  <Step title="You send the request">
+    With the amount, network, wallet number, the person's name and a unique `Idempotency-Key`.
+  </Step>
+  <Step title="We check it">
+    Your balance must cover the amount plus the fee. We also run fraud and limit checks.
+  </Step>
+  <Step title="We send the money">
+    The amount and fee leave your payout balance and the money goes to the wallet, usually within seconds.
+  </Step>
+  <Step title="You get the result">
+    A `transfer.succeeded` or `transfer.failed` webhook. If a payout fails, the money goes back to your balance.
+  </Step>
+</Steps>
 
-```typescript typescript
-type TransferParams = {
-  amount: number;
-  currency: string;
-  narration?: string;
-  network: string;
-  beneficiary_name: string;
-  account_number: string;
-  metadata?: object;
-  callback_url?: string;
-};
+## Where you can send money
+
+| Network | `network` value | Wallet number |
+| --- | --- | --- |
+| Wave | `wave` | 7 or 9 digits |
+| Afrimoney | `afrimoney` | 7 or 9 digits |
+
+To get the current list for your account, call `GET /v1/transfers/payout-channels`.
+
+## The transfer object
+
+```json
+{
+  "id": "45eb796c-e66a-442f-bba2-d282053f8883",
+  "type": "mobile-money",
+  "status": "completed",
+  "amount": 100,
+  "fee": 1,
+  "currency": "GMD",
+  "network": "afrimoney",
+  "account_number": "7834567",
+  "account_name": "Awa Jallow",
+  "transfer_reference": "5Np7iVHrN",
+  "balance_before": 995,
+  "balance_after": 894,
+  "note": "April supplies",
+  "metadata": { "invoice_id": "inv_204" },
+  "test_mode": true,
+  "createdAt": "2025-05-05T21:12:52.839Z"
+}
 ```
 
-* `amount` – The amount to send.
-* `currency` – Currency code (e.g., `GMD`, `USD`).
-* `network` – Mobile money provider or transfer channel.
-* `account_number` – Destination account (phone or bank account).
-* `beneficiary_name` – Name of the recipient.
-* `metadata` – Optional key-value pairs for internal tracking.
-* `callback_url` – The endpoint where Modem Pay will send a webhook notification after the payout has been processed.
+| Status | Meaning |
+| --- | --- |
+| `pending` | We're sending it. |
+| `pending_review` | Our fraud checks are holding it. Review it in the dashboard. |
+| `completed` | The money reached the wallet. |
+| `failed` | It didn't go through. The money is back in your balance. |
+| `cancelled` | It was stopped before sending. The money is back in your balance. |
+| `reversed` | The money came back after it was sent. It's back in your balance. |
 
+## Webhooks
 
-### Payout Object
+| Event | Sent when |
+| --- | --- |
+| `transfer.succeeded` | The money reached the wallet. |
+| `transfer.failed` | The payout failed. Your balance has been refunded. |
+| `transfer.reversed` | The money came back, either because you reversed it, or because nobody claimed a Wave payout. Your balance has been refunded. |
+| `transfer.flagged` | Our fraud checks are holding the payout for review. |
 
-Once initiated, a transfer is represented as:
+## Protect your balance
 
-```typescript typescript
-type Transfer = {
-  id: string;
-  business_id: string;
-  account_id: string;
-  amount: number;
-  currency: string;
-  type: "self" | "modem-pay" | "mobile-money" | "bank";
-  status: "pending" | "completed" | "failed" | "cancelled";
-  fee: number;
-  balance_before: number;
-  balance_after: number;
-  transfer_reference: string;
-  metadata: object;
-  // Optional fields based on type
-  network?: string;
-  account_number?: string;
-  mobile_number?: string;
-  bank?: string;
-  amount_received?: number;
-  otp?: string;
-  test_mode: boolean;
-  events: object;
-  note?: string;
-  callback_url?: string;
-};
-```
-
-This object is returned on creation and is also sent to your webhook endpoint when status updates occur.
-
-### Webhooks
-
-Payouts are asynchronous and may trigger the following webhook events:
-
-* `transfer.succeeded`
-* `transfer.failed`
-* `transfer.reversed`
-* `transfer.flagged`
-
+<AccordionGroup>
+  <Accordion title="Use a restricted key with payout limits">
+    Create a key with only the `transfers` permission, a per-payout limit and a daily limit, and lock it to your servers' IP addresses. Even if it leaks, the damage is capped. See [API keys](/documentation/authentication#payout-limits).
+  </Accordion>
+  <Accordion title="Always send an Idempotency-Key">
+    If your request times out and you retry with the same key, we won't pay twice.
+  </Accordion>
+  <Accordion title="Watch for transfer.flagged">
+    Flagged payouts need your review in the dashboard before more money can go to that number.
+  </Accordion>
+</AccordionGroup>

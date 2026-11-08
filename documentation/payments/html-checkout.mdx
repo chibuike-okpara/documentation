@@ -1,39 +1,55 @@
 ---
-title: HTML Checkout
+title: "HTML Checkout"
+description: "Accept payments with a plain HTML form. No backend, no JavaScript."
 ---
 
-Imagine a small bakery, *Sweet Crumbs*, nestled in a bustling Serrekunda. It’s run by Aminata, who has mastered the art of baking but struggles with technology. One day, a customer asks, "Do you have an online payment option?"  
+Put a form on your page. When the customer clicks the button, they go to Modem Pay's checkout, pay, and come back to your site.
 
-Determined not to lose sales, Amina turns to HTML Checkout. With just a few lines of code, her website gains the ability to accept payments.  
-
-Here’s how it looks:  
-
-
-```html html
+```html
 <form action="https://test.checkout.modempay.com/api/pay" method="POST">
-  <h3>Chocolate Cake</h3>
-  <p>Delicious and freshly baked. Pay now to enjoy!</p>
-  <input type="hidden" name="public_key" value="pk_test_e073bbf9db47b09cebfdf2f7ec147d02116b69ea55135e1747a0bc8d47612f69">
+  <input type="hidden" name="public_key" value="pk_test_...">
   <input type="hidden" name="amount" value="150">
   <input type="hidden" name="currency" value="GMD">
+  <input type="hidden" name="return_url" value="https://yoursite.com/thanks">
+  <input type="hidden" name="cancel_url" value="https://yoursite.com/cart">
   <button type="submit">Pay GMD 150</button>
 </form>
 ```
 
+Try it:
+
 <iframe
   height="400"
   width="100%"
-  title="Modem Pay Inline Payment"
+  title="Modem Pay HTML Checkout"
   src="https://codepen.io/mercury-sms/embed/VYZmLQZ?default-tab=result"
   frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+  allow="clipboard-write; fullscreen"
   referrerpolicy="strict-origin-when-cross-origin"
   allowfullscreen
 ></iframe>
 
+## Form fields
 
-With this simple form, her customers can now order their favorite cakes online and pay instantly. No fancy frameworks, no complicated integrations, just pure HTML doing what it does best.  
+| Field | Required | What it does |
+| --- | --- | --- |
+| `public_key` | Yes | Your **public** key (`pk_test_…` or `pk_live_…`). Never your secret key. |
+| `amount` | Yes | Amount in GMD, at least 10. |
+| `currency` | No | `GMD`. |
+| `return_url` | Recommended | Where the customer goes after paying. |
+| `cancel_url` | Recommended | Where the customer goes if they cancel. |
+| `customer_name` | No | Fills in checkout for the customer. |
+| `customer_email` | No | Fills in checkout for the customer. |
+| `customer_phone` | No | Fills in checkout for the customer. |
+| `metadata` | No | Your own data, like an order ID. It comes back on the transaction and webhook. |
 
-By the weekend, *Sweet Crumbs* receives its first online payment. Amina watches her business grow, one click at a time, as her delicious creations reach new corners of the city.  
+## Confirm the payment
 
-It’s not just a solution; it’s a story of transformation, proving that sometimes, simplicity is the sweetest recipe of all.  
+Anyone can edit a form in their browser, including the amount. So **before you deliver anything, check the payment on your server**:
+
+- receive the `charge.succeeded` [webhook](/documentation/core/webhooks) and check its `amount`, or
+- look the payment up with your secret key.
+
+<Tip>
+  Want customers to pay without leaving your page? Use the [pay button](/documentation/payments/drop-in) or the [checkout pop-up](/documentation/payments/modem-inline) instead. Both are just as easy.
+</Tip>

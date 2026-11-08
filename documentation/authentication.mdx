@@ -1,46 +1,166 @@
 ---
-title: Authentication
+title: "API keys"
+description: "How to authenticate, and how to limit what each key can do."
 ---
 
-Modem Pay uses API keys to authenticate requests, ensuring that only authorized applications can access payment functions. API keys are generated in the Modem Pay dashboard and can be used in either live or test modes.
+Every request to the Modem Pay API needs a **secret key**. You create and manage keys in the dashboard under **Developers → API keys**.
 
-1. **API Keys**  
-   Modem Pay provides two types of API keys:
+## Your two kinds of key
 
-   - **Public Key**: Used on the client side for initial requests (e.g., HTML form submissions).
-   - **Secret Key**: Used on the server side for secure API calls and operations that need high trust (e.g., managing payment intents, accessing sensitive customer data).
+| Key | Looks like | Where it goes |
+| --- | --- | --- |
+| **Secret key** | `sk_test_…` / `sk_live_…` | Your server only. Used by the SDKs and the API. |
+| **Public key** | `pk_test_…` / `pk_live_…` | Your website. Used by the pay button, checkout pop-up and HTML Checkout. |
 
-2. **Using API Keys in Requests**  
-   To authenticate a request, include the appropriate key in the request header:
+`test` keys only touch test data. `live` keys move real money. A test key can't see live data, and a live key can't see test data.
 
-    <CodeGroup>
+<Warning>
+  Never put a secret key in a website, mobile app or public repository. Anyone with it can act on your account. If one leaks, [roll it](#roll-a-key) straight away.
+</Warning>
 
-   ```javascript nodejs
-   import ModemPay from "modem-pay";
+<Note>
+  Modem Pay stores only a hash of each secret key. You see the full key **once**, when you create it. Save it somewhere safe, like your server's environment variables. If you lose it, roll the key to get a new one.
+</Note>
 
-   const modempay = new ModemPay("sk_test_b9596....4865");
-   ```
+## Make a request
 
-   ```python python
-   from modempay import ModemPay
+Send the secret key as a bearer token:
 
-   modem_pay = ModemPay(api_key="sk_test_b9596....4865")
-   ```
+<CodeGroup>
+```javascript nodejs
+import ModemPay from "modem-pay";
 
-   ```php php
-   use ModemPay\ModemPay;
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY);
+```
 
-   $modemPay = new ModemPay('YOUR_MODEM_PAY_API_KEY');
-   ```
+```python python
+import os
+from modempay import ModemPay
 
-   ```http http
-   Authorization: Bearer sk_test_b9596....4865
-   ```
+modem_pay = ModemPay(api_key=os.environ["MODEMPAY_SECRET_KEY"])
+```
 
-    </CodeGroup>
+```php php
+use ModemPay\ModemPay;
 
-   Alternatively, in HTML forms, pass the `public_key` as a hidden field.
+$modemPay = new ModemPay(getenv('MODEMPAY_SECRET_KEY'));
+```
 
-3. **Test and Live Modes**
+```bash cURL
+curl https://api.modempay.com/v1/balances \
+  -H "Authorization: Bearer sk_test_..."
+```
+</CodeGroup>
 
-   Modem Pay separates test and live keys, enabling you to test transactions without impacting real accounts. Test keys operate in a sandbox environment, allowing you to simulate payment flows before going live.
+## Full-access and restricted keys
+
+A **full-access** key can call every endpoint. That's convenient, but risky: if it leaks, someone could send payouts from your balance.
+
+A **restricted** key can only do what you allow. Give each system its own restricted key with just the permissions it needs. For example, your website's checkout only needs to create payments. It never needs to send money.
+
+When you create a restricted key in the dashboard you can set:
+
+<CardGroup cols={2}>
+  <Card title="Permissions" icon="list-check">
+    Pick exactly which resources it can read or change.
+  </Card>
+  <Card title="Expiry" icon="clock">
+    1 day, 7 days, 30 days, 90 days, 1 year, never, or a date you choose.
+  </Card>
+  <Card title="Allowed IP addresses" icon="network-wired">
+    Up to 20 IP addresses or ranges. Requests from anywhere else are refused.
+  </Card>
+  <Card title="Payout limits" icon="gauge">
+    A maximum per payout and per day, for keys that can send money.
+  </Card>
+</CardGroup>
+
+You can have up to **5** active full-access keys and **20** active restricted keys per account and mode.
+
+### Permissions
+
+Each permission is a resource and an access level, like `payments:write`. A `write` permission includes `read` for the same resource.
+
+| Permission | `read` lets the key… | `write` lets the key… |
+| --- | --- | --- |
+| `payments` | View payment intents and payment methods available at checkout | Create, charge, confirm and cancel payment intents |
+| `transactions` | View transactions | — |
+| `refunds` | — | Refund customers **(moves money)** |
+| `transfers` | View payouts, bulk payouts, fees and payout channels | Send and reverse payouts **(moves money)** |
+| `balance` | View balances | — |
+| `customers` | View customers and their saved payment methods | Create, update and delete customers |
+| `payment_methods` | View payment methods and mandates | Create, attach and detach payment methods |
+| `payment_links` | View payment links | Create, update and delete payment links |
+| `invoices` | View invoices | Create, edit, send and mark invoices as paid |
+| `coupons` | View coupons | Create, update and delete coupons |
+| `sub_accounts` | View sub-accounts and groups | Create, update and deactivate them **(changes where money goes)** |
+| `terminals` | View virtual terminals and download posters | Create, update and delete terminals |
+| `ramps` | View stablecoin payments and conversions, get quotes | Create stablecoin payments and conversions **(moves money)** |
+| `webhooks` | — | Trigger test webhook events |
+
+### Ready-made sets
+
+The dashboard offers three starting points:
+
+| Preset | Includes | Good for |
+| --- | --- | --- |
+| **Read only** | Every `read` permission | Reporting, accounting, dashboards |
+| **Accept payments** | `payments`, `payment_links` and `customers` (write), plus `transactions` and `balance` (read) | Website and app checkouts |
+| **Payments and transfers** | `payments` and `transfers` (write), plus `transactions` and `balance` (read) | Systems that collect and pay out |
+
+### Payout limits
+
+On a key that can send money, you can set:
+
+- `per_transfer`: the most a single payout can be.
+- `daily`: the most the key can send in total each day.
+
+For bulk payouts, every item counts. If a request would go over a limit, it's refused with `per_transfer_limit_exceeded` or `daily_transfer_limit_exceeded`, and nothing is sent.
+
+## IP allowlists
+
+There are two levels:
+
+- **Per key:** set when you create the key. Applies to that key only.
+- **Per account:** set in the dashboard. Applies to every key on that account and mode.
+
+A request must pass both. Ranges use CIDR, like `203.0.113.0/24`.
+
+## Roll a key
+
+Rolling replaces a key with a new one. You choose how long the old key keeps working, from 0 hours up to 7 days (24 hours by default), so you can update your servers without downtime. The new key keeps the old key's permissions.
+
+Roll a key straight away if:
+
+- it was committed to a code repository or shared in chat;
+- someone who had it leaves your team;
+- you see requests you don't recognise in the audit log.
+
+To stop a key immediately, **revoke** it instead.
+
+## When a key is refused
+
+Errors from key checks include a `code` you can act on:
+
+| Status | `code` | What it means |
+| --- | --- | --- |
+| 401 | `authorization_invalid` | The header isn't `Authorization: Bearer <secret key>`. |
+| 401 | `public_key_not_allowed` | You sent a public key (`pk_`). Use your secret key. |
+| 401 | `api_key_invalid` | The key doesn't exist, or a test key was used where a live key is needed. |
+| 401 | `api_key_revoked` | The key was revoked. |
+| 401 | `api_key_expired` | The key has expired. Create a new one. |
+| 403 | `ip_not_allowed` | The request came from an IP address that isn't allowed. |
+| 403 | `insufficient_scope` | The key is missing a permission. `required_scope` names it. |
+| 403 | `route_not_permitted` | Restricted keys can't use this endpoint at all. |
+
+```json
+{
+  "message": "This API key does not have the 'transfers:write' permission required for this request.",
+  "code": "insufficient_scope",
+  "required_scope": "transfers:write"
+}
+```
+
+<Tip>
+  Keys with an expiry date send an `X-Key-Expires-At` header on every response. Alert on it so a key never expires by surprise.
+</Tip>

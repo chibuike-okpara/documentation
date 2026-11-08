@@ -1,24 +1,36 @@
 ---
-title: Webhooks
+title: "Webhooks"
+description: "Get told the moment a payment, payout, customer or invoice changes."
 ---
 
-Modem Pay's webhooks notify your server about key events, such as customer creation, payment intent updates, and successful charges. To receive and securely process these notifications, follow the steps outlined here for setting up, validating, and handling webhooks.
+A webhook is a `POST` request Modem Pay sends to your server when something happens, like a payment succeeding. Use webhooks to mark orders paid, send receipts and update your records, even when the customer closes their browser.
 
-<Note>
-You can generate your unique Modem Pay webhook secret in the Modem Pay dashboard under **_Developers > Webhooks_**.
-</Note>
+## Set up your endpoint
 
-## Setting Up Webhooks  
+<Steps>
+  <Step title="Create a POST endpoint">
+    It must be public and use HTTPS, for example `https://yoursite.com/webhooks/modempay`. Local addresses like `localhost` are refused. To test locally, use the [CLI](/documentation/cli).
+  </Step>
+  <Step title="Add it in the dashboard">
+    Go to **Developers → Webhooks** and enter the URL. You can have one webhook per account in test mode and one in live mode.
+  </Step>
+  <Step title="Copy the signing secret">
+    You'll use it to check that each request really came from Modem Pay. For safety, revealing it asks for a one-time code sent to your email.
+  </Step>
+  <Step title="Reply 200 quickly">
+    Return `200` as soon as you've checked the signature, then do the slow work (emails, database updates) afterwards.
+  </Step>
+</Steps>
 
-1. **Define Your Webhook Endpoint**:  
-   Create a dedicated `POST` endpoint on your server to receive webhook events from Modem Pay. Ensure this endpoint is accessible over HTTPS to maintain security.
+<Warning>
+  **Saving the webhook URL creates a new signing secret.** This happens when you change the URL, and when you turn a disabled webhook back on. After any change, copy the new secret to your server, or every signature check will fail.
+</Warning>
 
-2. **Listening for Events**:  
-   Your endpoint will receive a variety of event notifications (e.g., `customer.created`, `payment_intent.created`, `charge.succeeded`). The event type is provided in the `event` field, while the main data is within the `payload`.  
+## What a webhook looks like
 
-### Sample Webhook Event
+Every webhook has two fields: `event`, the name of what happened, and `payload`, the object it happened to.
 
-```javascript json
+```json
 {
   "event": "charge.succeeded",
   "payload": {
@@ -26,369 +38,269 @@ You can generate your unique Modem Pay webhook secret in the Modem Pay dashboard
     "type": "payment",
     "amount": 2500,
     "currency": "GMD",
-    "payment_method": "qmoney",
-    "customer": "0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6",
-    "metadata": {},
     "status": "completed",
+    "payment_method": "qmoney",
+    "payment_account": ".... 9944",
+    "transaction_reference": "VOAO1CFEN7",
+    "payment_intent_id": "273ac751-369d-4198-8340-da480208bded",
     "payment_link_id": null,
+    "customer": "0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6",
+    "customer_name": "Awa Jallow",
+    "customer_phone": "7024725",
+    "customer_email": "awa@example.com",
+    "metadata": { "order_id": "1042" },
     "custom_fields_values": {},
     "business_id": "a10a51ae-05c8-406e-968c-7b1d309a77e0",
     "account_id": "7788dd90-3801-47a6-8597-b46eaa0a7d7d",
     "test_mode": true,
-    "customer_name": "Zypheron Kade",
-    "customer_phone": "7024725",
-    "customer_email": "calebchibuike110@gmail.com",
     "createdAt": "2024-12-15T09:34:17.036Z",
-    "updatedAt": "2024-12-15T09:34:43.306Z",
-    "payment_account": ".... 9944",
-    "payment_metadata": {
-      "os": "MacOS",
-      "browser": "Firefox",
-      "ipAddress": "196.223.149.183",
-      "timestamp": "2024-12-15T09:34:43.266Z",
-      "deviceType": "Desktop",
-      "urlIPAddress": "https://db-ip.com/196.223.149.183",
-      "screenResolution": "1600x900"
-    },
-    "payment_intent_id": "273ac751-369d-4198-8340-da480208bded",
-    "transaction_reference": "VOAO1CFEN7",
-    "payment_method_id": "4dbaaec5-7a16-4908-8fd9-c3d2bd24f739"
+    "updatedAt": "2024-12-15T09:34:43.306Z"
   }
 }
 ```
 
-## Webhook Security and Signature Validation  
+## Events
 
-To confirm the integrity of incoming events, Modem Pay includes a unique `x-modem-signature` header in each webhook request. This header allows you to verify that the event originated from Modem Pay.  
+<AccordionGroup>
+  <Accordion title="Payments (charge.*)" icon="credit-card" defaultOpen>
+    | Event | Sent when |
+    | --- | --- |
+    | `charge.created` | A customer starts paying. |
+    | `charge.succeeded` | **The money is in.** Fulfil the order on this one. |
+    | `charge.failed` | The payment didn't go through. |
+    | `charge.cancelled` | The customer or the provider cancelled the payment. |
+    | `charge.refunded` | You refunded the payment, fully or partly. |
+  </Accordion>
+  <Accordion title="Payment intents (payment_intent.*)" icon="file-invoice-dollar">
+    | Event | Sent when |
+    | --- | --- |
+    | `payment_intent.created` | You created a payment intent. |
+    | `payment_intent.cancelled` | You cancelled it. |
+    | `payment_intent.expired` | It wasn't paid in time and can no longer be used. |
+    | `payment_intent.restored` | An expired intent was reopened with a new link. |
+  </Accordion>
+  <Accordion title="Payouts (transfer.*)" icon="paper-plane">
+    | Event | Sent when |
+    | --- | --- |
+    | `transfer.succeeded` | The money reached the recipient. |
+    | `transfer.failed` | The payout failed. The money is back in your balance. |
+    | `transfer.reversed` | The payout came back, for example a Wave payout nobody claimed. The money is back in your balance. |
+    | `transfer.flagged` | Our fraud checks stopped the payout for review. See [fraud checks](/documentation/payouts/mobile-money#fraud-checks). |
+  </Accordion>
+  <Accordion title="Customers (customer.*)" icon="user">
+    | Event | Sent when |
+    | --- | --- |
+    | `customer.created` | A customer was created. |
+    | `customer.updated` | A customer's details changed. |
+    | `customer.deleted` | A customer was deleted. |
+  </Accordion>
+  <Accordion title="Invoices (invoice.*)" icon="file-lines">
+    | Event | Sent when |
+    | --- | --- |
+    | `invoice.created` | An invoice was created. |
+    | `invoice.updated` | An invoice changed. |
+    | `invoice.deleted` | An invoice was deleted. |
+    | `invoice.overdue` | The due date passed without payment (live mode only). |
+  </Accordion>
+</AccordionGroup>
 
-1. **Retrieve the Signature**:  
-   In your webhook endpoint, extract the `x-modem-signature` header from the incoming request.  
+## Verify the signature
 
-2. **Use `modempay.webhooks.composeEventDetails` for Validation**:  
-   Pass the payload, signature, and your unique Modem Pay secret to the `modempay.webhooks.composeEventDetails` function. This function performs the necessary checks, verifying the signature and parsing the payload.  
-
-
-<CodeGroup>
-```javascript js-sdk
-// Example usage
-const event = modempay.webhooks.composeEventDetails(
-    payload,
-    xSignatureHeader,
-    modemSecret
-);
-```
-```python python-sdk
-# Example usage
-event = modem_pay.webhooks.compose_event_details(payload, xSignatureHeader, modemSecret)
-```
-
-```php php-sdk
-$event = $modemPay->webhooks()->composeEventDetails(
-    $payload,
-    $xSignatureHeader,
-    $modemSecret
-);
-```
-
-```javascript javascript
-app.post("/modem-webhook", (req, res) => {
-  const payload = JSON.stringify(req.body);
-  const signature = req.headers["x-modem-signature"];
-
-  // Ensure the signature is provided
-  if (!signature) {
-    return res.status(400).json({ message: "Signature missing" });
-  }
-
-  const secretHash = process.env.MODEM_PAY_SECRET_HASH;
-
-  // Generate the HMAC-SHA512 hash for signature comparison
-  const computedSignature = crypto
-    .createHmac("sha512", secretHash)
-    .update(payload)
-    .digest("hex");
-
-  // Ensure the signature length matches to avoid timing attacks
-  if (computedSignature.length !== signature.length) {
-    return res.status(400).json({ message: "Invalid signature length" });
-  }
-
-  // Use timing-safe comparison to protect against timing attacks
-  if (
-    !crypto.timingSafeEqual(
-      Buffer.from(computedSignature),
-      Buffer.from(signature)
-    )
-  ) {
-    return res.status(400).json({ message: "Invalid signature!" });
-  }
-
-  // Parse the payload to handle the event
-  try {
-    const eventPayload = JSON.parse(payload);
-    // You can add logic here to process the eventPayload
-    res.sendStatus(200); // Acknowledge successful receipt
-  } catch (error) {
-    res.status(400).json({ message: "Invalid event data" });
-  }
-});
-```
-```go go
-package main
-
-import (
-	"crypto/hmac"
-	"crypto/sha512"
-	"crypto/subtle"
-	"encoding/hex"
-	"encoding/json"
-	"io"
-	"net/http"
-	"os"
-)
-
-func modemWebhookHandler(w http.ResponseWriter, r *http.Request) {
-	// Read request body
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, `{"message": "Failed to read request body"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Get signature from header
-	signature := r.Header.Get("x-modem-signature")
-	if signature == "" {
-		http.Error(w, `{"message": "Signature missing"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Get secret hash from environment
-	secretHash := os.Getenv("MODEM_PAY_SECRET_HASH")
-
-	// Generate HMAC-SHA512 hash
-	mac := hmac.New(sha512.New, []byte(secretHash))
-	mac.Write(body)
-	computedSignature := hex.EncodeToString(mac.Sum(nil))
-
-	// Check signature length
-	if len(computedSignature) != len(signature) {
-		http.Error(w, `{"message": "Invalid signature length"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Timing-safe comparison
-	if subtle.ConstantTimeCompare([]byte(computedSignature), []byte(signature)) != 1 {
-		http.Error(w, `{"message": "Invalid signature!"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Parse payload
-	var eventPayload interface{}
-	if err := json.Unmarshal(body, &eventPayload); err != nil {
-		http.Error(w, `{"message": "Invalid event data"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Process eventPayload here if needed
-	// ...
-
-	// Send success response
-	w.WriteHeader(http.StatusOK)
-}
-
-func main() {
-	http.HandleFunc("/modem-webhook", modemWebhookHandler)
-	http.ListenAndServe(":8080", nil)
-}
-```
-```python python
-app = Flask(__name__)
-
-@app.route("/modem-webhook", methods=["POST"])
-def modem_webhook():
-    payload = json.dumps(request.json)
-    signature = request.headers.get("x-modem-signature")
-
-    # Ensure the signature is provided
-    if not signature:
-        return jsonify({"message": "Signature missing"}), 400
-
-    secret_hash = os.environ.get("MODEM_PAY_SECRET_HASH")
-
-    # Generate the HMAC-SHA512 hash for signature comparison
-    computed_signature = hmac.new(
-        secret_hash.encode(), payload.encode(), hashlib.sha512
-    ).hexdigest()
-
-    # Ensure the signature length matches to avoid timing attacks
-    if len(computed_signature) != len(signature):
-        return jsonify({"message": "Invalid signature length"}), 400
-
-    # Use timing-safe comparison to protect against timing attacks
-    if not hmac.compare_digest(computed_signature, signature):
-        return jsonify({"message": "Invalid signature!"}), 400
-
-    # Parse the payload to handle the event
-    try:
-        event_payload = json.loads(payload)
-        # Logic to process the eventPayload can go here
-        return "", 200  # Acknowledge successful receipt
-    except json.JSONDecodeError:
-        return jsonify({"message": "Invalid event data"}), 400
-
-if __name__ == "__main__":
-    app.run(debug=True)
-```
-</CodeGroup>
-
-<Tip>
-Always respond to webhook events with an HTTP `200 OK` status to confirm receipt. This ensures Modem Pay doesn’t retry the webhook unnecessarily.  
-</Tip>
-
-### Event Structure
-
-Upon successful validation, `modempay.webhooks.composeEventDetails` returns an `Event` object containing the event type and payload data. The event types you may receive include:
-
-- **Customer Events**: `"customer.created"`, `"customer.updated"`, `"customer.deleted"`
-- **Payment Intent Events**: `"payment_intent.created"`, `"payment_intent.cancelled"`, `"payment_intent.expired"`
-- **Charge Events**: `"charge.succeeded"`, `"charge.cancelled"`, `"charge.created"`, `"charge.updated"`, `"charge.expired"`
-- **Payout Events**: `"transfer.succeeded"`, `"transfer.cancelled"`, `"transfer.reversed"`, `"transfer.failed"`, `"transfer.flagged"`
-
-
-### Example Usage
-
-Here’s an example of using `modempay.webhooks.composeEventDetails` to handle incoming webhooks in a Node.js application:
-
-<CodeGroup>
-```javascript nodejs
-const express = require("express");
-const bodyParser = require("body-parser");
-const ModemPay = require("modem-pay");
-
-const modempay = new ModemPay();
-const app = express();
-app.use(bodyParser.json());
-
-app.post("/webhook", (req, res) => {
-  const payload = req.body;
-  const signature = req.headers["x-modem-signature"];
-  const secret = process.env.MODEM_WEBHOOK_SECRET;
-
-  try {
-    const event = modempay.webhooks.composeEventDetails(payload, signature, secret);
-    // Process the event
-    switch (event.event) {
-      case "customer.created":
-        // Handle new customer logic
-        break;
-      case "charge.succeeded":
-        // Process successful payment
-        break;
-      // Add other cases as needed
-    }
-
-    res.status(200).send("Webhook processed!");
-  } catch (error) {
-    res.status(400).send("Invalid signature!");
-  }
-});
-
-app.listen(3000, () => console.log("Listening for webhooks on port 3000"));
-```
-```python flask
-import os
-from modempay import ModemPay
-from flask import Flask, request, jsonify
-
-modem_pay = ModemPay(api_key="YOUR_MODEM_PAY_API_KEY", config={"timeout": 20})
-
-app = Flask(__name__)
-
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    payload = request.get_json()
-    signature = request.headers.get("x-modem-signature")
-    secret = os.environ.get("MODEM_WEBHOOK_SECRET")
-
-    try:
-        event = modem_pay.webhooks.compose_event_details(payload, signature, secret)
-        # Process the event
-        if event["event"] == "customer.created":
-            # Handle new customer logic
-            pass
-        elif event["event"] == "charge.succeeded":
-            # Process successful payment
-            pass
-        # Add other cases as needed
-
-        return "Webhook processed!", 200
-    except Exception:
-        return "Invalid signature!", 400
-
-
-if __name__ == "__main__":
-    app.run(port=3000, debug=True)
-
-```
-```php laravel
-public function handle(Request $request)
-{
-    try {
-        $event = ModemPay::webhooks()->composeEventDetails(
-            $request->getContent(),
-            $request->header('x-modem-signature'),
-            config('modempay.webhook_secret')
-        );
-
-        // Log event
-        Log::info('ModemPay webhook received', [
-            'event' => $event->event->value,
-            'payload' => $event->payload
-        ]);
-
-        // Process based on event type
-        switch ($event->event) {
-            case EventType::CHARGE_SUCCEEDED:
-                Order::where('payment_id', $event->payload['id'])
-                     ->update(['status' => 'paid']);
-                break;
-
-            case EventType::CHARGE_FAILED:
-                Order::where('payment_id', $event->payload['id'])
-                     ->update(['status' => 'failed']);
-                break;
-        }
-
-        return response()->json(['status' => 'success']);
-
-    } catch (\Exception $e) {
-        Log::error('Webhook processing failed', ['error' => $e->getMessage()]);
-        return response()->json(['error' => 'Processing failed'], 400);
-    }
-}
-```
-</CodeGroup>
-
-
-### Recommended Response
-
-For each webhook event, respond to Modem Pay with an HTTP `200 OK` status as confirmation. This ensures Modem Pay won’t re-send the event unless there's an error response.
+Every webhook has an `x-modem-signature` header. It's an HMAC-SHA512 of the **exact request body**, made with your webhook signing secret. Check it before you trust anything in the request.
 
 <Warning>
-Ensure your webhook endpoint quickly responds with an HTTP `200 OK` status before performing any tasks that might cause delays or timeouts, such as updating records or sending invoices. This prevents webhook retries and ensures smooth processing.
+  **Use the raw body.** Don't parse the JSON and turn it back into a string. Many frameworks change spacing or key order when they do that, and the signature no longer matches. This is the most common reason signature checks fail, especially on Firebase, Vercel and other serverless platforms.
 </Warning>
 
-### Webhook Retries
+<CodeGroup>
+```javascript Node (Express)
+import express from "express";
+import ModemPay from "modem-pay";
 
-Modem Pay ensures reliable delivery of webhook events through an automatic retry mechanism.
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY);
+const app = express();
 
-If your server fails to acknowledge a webhook event with a **`200 OK`** HTTP response, Modem Pay will retry the delivery up to **3 times**, with each retry spaced **10 minutes apart**. A failure could be due to reasons such as server timeouts, network errors, or non-2xx response codes.
+// express.raw keeps the body exactly as it was sent.
+app.post("/webhooks/modempay", express.raw({ type: "application/json" }), (req, res) => {
+  let event;
+  try {
+    event = modempay.webhooks.composeEventDetails(
+      req.body.toString("utf8"),
+      req.headers["x-modem-signature"],
+      process.env.MODEMPAY_WEBHOOK_SECRET,
+    );
+  } catch {
+    return res.status(400).send("Invalid signature");
+  }
 
-To avoid unnecessary retries and ensure smooth webhook processing, **always return a `200 OK` response immediately**, even if you need to carry out time-consuming tasks (like writing to a database or triggering external API calls). It’s recommended to offload such operations to a background worker or job queue.
+  res.sendStatus(200);
 
-By following this best practice, you help prevent duplicate processing and reduce the risk of delays or rate-limiting due to repeated webhook attempts.
+  switch (event.event) {
+    case "charge.succeeded":
+      // mark the order paid
+      break;
+    case "transfer.failed":
+      // tell your team
+      break;
+  }
+});
+```
 
+```javascript Firebase Functions
+import { onRequest } from "firebase-functions/v2/https";
+import ModemPay from "modem-pay";
 
-### Summary
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY);
 
-By following these steps, you can securely receive and process webhook events from Modem Pay, automating actions based on customer interactions and payment flows. Make sure to store and securely handle the event data, as each event may carry critical transaction or customer information relevant to your application.
+export const modempayWebhook = onRequest((req, res) => {
+  try {
+    // Firebase keeps the original bytes in req.rawBody.
+    const event = modempay.webhooks.composeEventDetails(
+      req.rawBody.toString("utf8"),
+      req.get("x-modem-signature"),
+      process.env.MODEMPAY_WEBHOOK_SECRET,
+    );
+    res.sendStatus(200);
+    // handle event.event and event.payload
+  } catch {
+    res.status(400).send("Invalid signature");
+  }
+});
+```
+
+```javascript Next.js (App Router)
+import ModemPay from "modem-pay";
+
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY);
+
+export async function POST(request) {
+  const raw = await request.text();
+  try {
+    const event = modempay.webhooks.composeEventDetails(
+      raw,
+      request.headers.get("x-modem-signature"),
+      process.env.MODEMPAY_WEBHOOK_SECRET,
+    );
+    // handle event.event and event.payload
+    return new Response("ok");
+  } catch {
+    return new Response("Invalid signature", { status: 400 });
+  }
+}
+```
+
+```python Python (Flask)
+import hashlib, hmac, json, os
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.post("/webhooks/modempay")
+def webhook():
+    raw = request.get_data()  # the raw bytes, not request.json
+    expected = hmac.new(
+        os.environ["MODEMPAY_WEBHOOK_SECRET"].encode(), raw, hashlib.sha512
+    ).hexdigest()
+
+    if not hmac.compare_digest(expected, request.headers.get("x-modem-signature", "")):
+        return "Invalid signature", 400
+
+    event = json.loads(raw)
+    if event["event"] == "charge.succeeded":
+        pass  # mark the order paid
+    return "", 200
+```
+
+```php PHP
+use ModemPay\ModemPay;
+
+$modemPay = new ModemPay(getenv('MODEMPAY_SECRET_KEY'));
+
+$raw = file_get_contents('php://input');
+
+try {
+    $event = $modemPay->webhooks()->composeEventDetails(
+        $raw,
+        $_SERVER['HTTP_X_MODEM_SIGNATURE'] ?? '',
+        getenv('MODEMPAY_WEBHOOK_SECRET')
+    );
+} catch (\Exception $e) {
+    http_response_code(400);
+    exit('Invalid signature');
+}
+
+http_response_code(200);
+// handle $event->event and $event->payload
+```
+
+```go Go
+func modemWebhook(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	mac := hmac.New(sha512.New, []byte(os.Getenv("MODEMPAY_WEBHOOK_SECRET")))
+	mac.Write(body)
+	expected := hex.EncodeToString(mac.Sum(nil))
+
+	if !hmac.Equal([]byte(expected), []byte(r.Header.Get("x-modem-signature"))) {
+		http.Error(w, "invalid signature", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	// json.Unmarshal(body, &event) and handle it
+}
+```
+
+```javascript Node (no SDK)
+import crypto from "crypto";
+
+function isFromModemPay(rawBody, signature, secret) {
+  const expected = crypto.createHmac("sha512", secret).update(rawBody).digest("hex");
+  return (
+    typeof signature === "string" &&
+    signature.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  );
+}
+```
+</CodeGroup>
+
+### Still failing?
+
+- Are you using the secret from the **same mode**? Test and live webhooks have different secrets.
+- Did you change the webhook URL recently? That creates a new secret.
+- Are you using the **webhook signing secret**, not your API secret key?
+- Are you checking the **raw** body? Log `rawBody.length` and compare it with the `Content-Length` header.
+
+## Retries
+
+If your endpoint doesn't reply with a `2xx` status, or times out, Modem Pay tries again **up to 3 more times, 10 minutes apart**.
+
+You can see every delivery, with your server's response, in **Developers → Webhooks → Events**. From there you can **resend** any event by hand.
+
+### Handle duplicates
+
+Because of retries, you may get the same event more than once. Make your handler safe to run twice. For example, before marking an order paid, check it isn't already paid. The `payload.id` stays the same across retries.
+
+## Webhooks or `callback_url`?
+
+You can also pass a `callback_url` when you create a payment intent. Modem Pay then sends that payment's events to that URL **instead of** your webhook. This is handy when different payments belong to different systems.
+
+| | Webhook | `callback_url` |
+| --- | --- | --- |
+| Set in | Dashboard, once | Each request |
+| Receives | Every event on the account, unless the object has a `callback_url` | Events for that one payment |
+| Signed with | Your webhook signing secret | A hash of your secret API key |
+
+See [Callback URL](/documentation/payment-intents/callback_url) for how to verify those.
+
+## Good practice
+
+- Fulfil orders on `charge.succeeded`, not when the customer lands on your `return_url`.
+- Check `payload.amount` and `payload.currency` match what you expected.
+- Check `payload.test_mode` is `false` before shipping real goods.
+- Reply fast. Put slow work in a background job.

@@ -1,33 +1,14 @@
 ---
-title: Payout Fees
+title: "Payout fees"
+sidebarTitle: "Fees"
+description: "See exactly what a payout will cost before you send it."
 ---
 
-With Modem Pay, you can check how much a transfer will cost before proceeding. This allows you to estimate the total amount, including any fees that will be applied based on the payment network and transfer amount.
+Each payout has a fee that depends on the network and the amount. The fee is taken from your payout balance **on top of** the amount, so the recipient always gets the full amount you send.
 
-### Check Payout Fees
+## Check a fee
 
-To check the fee for a transfer, use the `/v1/transfers/fees` endpoint. You can specify the transfer amount, currency, and network to get an estimate of the transfer fee.
-
-#### Request Parameters
-
-| Field        | Type   | Description                                                  |
-|--------------|--------|--------------------------------------------------------------|
-| `amount`     | `number` | The amount to be transferred.          |
-| `currency`   | `string` | The currency code (e.g., "GMD", "USD").                      |
-| `network`    | `string` | The payment network used (e.g., "afrimoney", "wave").         |
-
-#### Response
-
-The response will include the transfer fee, the currency of the fee, and the amount that will be sent.
-
-| Field        | Type   | Description                                                  |
-|--------------|--------|--------------------------------------------------------------|
-| `fee`        | `number` | The fee for the transfer.              |
-| `currency`   | `string` | The currency code of the fee (e.g., "GMD", "USD").            |
-| `network`    | `string` | The payment network used for the transfer (e.g., "afrimoney", "wave"). |
-| `amount`     | `number` | The total amount to be transferred.        |
-
-### Example
+`POST /v1/transfers/fees` with the `amount`, `currency` and `network` you plan to use.
 
 <CodeGroup>
 ```typescript nodejs
@@ -81,11 +62,6 @@ curl -X POST https://api.modempay.com/v1/transfers/fees \
 ```
 </CodeGroup>
 
-
-### Example Response
-
-The following is a sample response returned from the API after querying the transfer fee:
-
 ```json
 {
   "fee": 5,
@@ -95,4 +71,8 @@ The following is a sample response returned from the API after querying the tran
 }
 ```
 
-In this example, the transfer fee is **5 GMD**, and the total amount to be debited (including fees) is **1,005 GMD**.
+Here the recipient gets **1,000 GMD** and your balance goes down by **1,005 GMD**.
+
+<Tip>
+  For a [bulk payout](/documentation/payouts/bulk-payout), the response has `total_fees` and `total_chargeable_amount` for the whole batch.
+</Tip>

@@ -1,0 +1,33 @@
+---
+title: "Reverse a payout"
+description: "Pull back a Wave payout sent by mistake, within 3 days."
+---
+
+Sent money to the wrong number, or the wrong amount? You can ask Wave to return a completed payout. If Wave agrees, the money goes back to your payout balance.
+
+## When you can reverse
+
+- The payout went to **Wave**.
+- Its status is `completed`.
+- It was sent **no more than 3 days ago**.
+
+Afrimoney payouts can't be reversed through the API. Contact the recipient, or email [info@modempay.com](mailto:info@modempay.com).
+
+## Reverse it
+
+Use the payout's `id` or its `transfer_reference`:
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/transfers/reverse/45eb796c-e66a-442f-bba2-d282053f8883 \
+  -H "Authorization: Bearer sk_test_..."
+```
+
+This needs a key with the `transfers:write` permission.
+
+If it works, the payout's status becomes `reversed`, the amount **and the fee** go back to your payout balance, and you get a `transfer.reversed` webhook.
+
+If Wave refuses, for example because the money was already withdrawn, you get an error and nothing changes. The payout stays `completed`.
+
+## Unclaimed Wave payouts
+
+If a Wave payout goes to a number with no Wave account, Wave holds it. If nobody claims it, Wave returns it after about 15 days. We then put the money back in your payout balance and send `transfer.reversed`.

@@ -1,18 +1,17 @@
 ---
-title: Mandate
+title: "Mandates"
+description: "Proof that a customer agreed to save their payment method."
 ---
 
-In Modem Pay, a **Mandate** is an authorization from a customer that allows their payment method to be used for future payments, either as one-click payments or recurring charges for subscriptions. Mandates are automatically created only when a customer chooses to save their payment method for future use, protecting merchants from liability and ensuring that only customer-authorized payment methods are stored.
+When a customer ticks **save this payment method** at checkout, Modem Pay records a **mandate**: their permission to charge that method again. You can't create mandates yourself. Only the customer can, which protects you if a payment is ever disputed.
 
-Mandates serve two main purposes:
-1. **Single Payments with Saved Payment Method**: Customers authorize saving their payment method, allowing quick future payments.
-2. **Subscription Payments**: For recurring charges, mandates ensure each payment cycle uses a customer-authorized payment method.
+Mandates are what let you:
 
-Because mandates can only be created by customer action, they provide added legal security for developers and merchants. This reduces the risk of disputes or liability, as mandates confirm that saved payment methods are customer-approved.
+- offer a customer's saved wallet at checkout next time, and
+- [charge a saved payment method](/documentation/payment-intents/create) for repeat payments.
 
----
 
-### Retrieving a Mandate
+## Get a mandate
 
 Mandates are tied directly to specific payment methods and can only be retrieved by the associated payment method ID, allowing merchants to verify authorization.
 
@@ -55,13 +54,5 @@ const mandate = await modempay.mandates.retrieve(
   "updatedAt": "2024-11-09T12:00:01.527Z"
 }
 ```
----
 
-### Key Points
-
-- **Automatic Creation**: Mandates are automatically generated when a customer requests to save a payment method, reinforcing authorization.
-- **Legal Protection**: Because mandates are only customer-initiated, merchants are safeguarded from potential legal issues or disputes related to unauthorized saved payment methods.
-- **Retrieval-Only**: Merchants cannot create mandates manually; they are retrieved by payment method ID only.
-- **Future Payment Authorization**: Mandates allow saved payment methods to be reused securely for single or recurring payments, simplifying the process for merchants and customers.
-
-Mandates ensure a secure, streamlined payment flow, supporting merchant compliance while giving customers control over their payment authorizations.
+A restricted key needs the `payment_methods:read` permission.

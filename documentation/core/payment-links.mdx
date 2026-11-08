@@ -1,185 +1,105 @@
 ---
-title: Payment Links
+title: "Payment links"
+description: "A link you share anywhere. Customers open it and pay. No website or code needed."
 ---
 
-**Payment Links** in Modem Pay are designed to help businesses collect payments effortlessly through a hosted checkout page. With a unique link, customers can be directed to pay for items or services without requiring code-intensive solutions or complicated integrations. 
-
-**Primary Use Cases**:
-- **Single-Charge Payments**: One-time payments, perfect for items or services.
-- **Recurring Payments (Subscriptions)**: Set up links for ongoing payments.
-- **Donations**: Enable variable amounts for donation collections.
-
-A Payment Link is highly customizable, allowing the merchant to specify payment details like amount, currency, title, description, and additional form fields. These fields enable you to gather custom data from customers, such as details about the product or service, or special instructions.
-
-### How it Works in Real Life
+A payment link opens a Modem Pay checkout page for a product, a service or a donation. Send it on WhatsApp, put it in your Instagram bio, print it as a QR code or add it to an email. Every link can be used again and again until you turn it off.
 
 <Tip>
-Fatou runs a boutique on Kairaba Avenue, selling elegant African prints and handcrafted accessories. Her shop, *Elegant Threads*, is popular among locals and tourists alike. But one challenge keeps coming up: customers often request to pay remotely for reserved items, especially during the busy festive seasons.  
-
-One afternoon, a loyal customer, Mariama, calls from Banjul. She has her eye on a stunning wax print dress but won’t be able to visit the shop until next week. “Can I pay now to secure it?” Mariama asks.  
-
-Fatou logs into the Modem Pay dashboard and quickly generates a payment link. She customizes it with the item’s name and price, D3,500 for the dress. Within seconds, she shares the link via WhatsApp.  
-
-Mariama clicks the link, completes the payment, and sends a confirmation screenshot. The dress is now secured, waiting for her pickup.  
-
-With Modem Pay’s payment link feature, Fatou keeps her customers happy and never misses a sale, even from miles away. On Kairaba Avenue, where businesses thrive on trust and connections, this simple tool has become a game-changer.
+  You don't need the API for this. Create links in the dashboard under **Payment links**. Use the API when you want to create links from your own system, for example one per product.
 </Tip>
----
 
-### Payment Link Properties
+## What you can set
 
-Each Payment Link object includes the following fields:
+| Field | Required | What it does |
+| --- | --- | --- |
+| `title` | No | Shown at the top of the checkout page. |
+| `description` | No | What the customer is paying for. |
+| `amount` | No | A fixed price. **Leave it out** to let the customer type any amount, which is good for donations and tips. |
+| `currency` | Yes | `GMD`. |
+| `redirect_url` | No | Where the customer goes after paying. |
+| `cancel_url` | No | Where the customer goes if they cancel. |
+| `custom_fields` | No | Extra questions to ask at checkout, like `"Student ID"` or `"Delivery address"`. Answers come back in `custom_fields_values` on the transaction and webhook. |
 
-- **id** *(string)*: Unique identifier.
-- **payment_link** *(string)*: URL to share with customers for payment.
-- **unique_code** *(string)*: Code used for tracking and managing the link.
-- **status** *(string)*: `"active"` or `"inactive"`, indicating availability.
-- **type** *(string)*: Payment link type, such as `"single-charge"`, `"subscriptions"`, or `"donations"`.
-- **title** *(string)*: Title displayed on the checkout page.
-- **description** *(string)*: Brief description of the item or service.
-- **amount** *(number)*: Amount to be charged; leave blank to let customers enter their preferred amount.
-- **currency** *(string)*: Payment currency.
-- **redirect_url** *(string)*: URL for successful payments.
-- **cancel_url** *(string)*: URL if the customer cancels the payment.
-- **custom_fields** *(string[])*: Fields to collect additional customer data.
-
---- 
-
-## Payment Link Operations
-
-Modem Pay’s Payment Link API provides tools to create, retrieve, update, list, and delete links. Here’s how each operation works:
-
-
-### 1. Create a Payment Link
-
-To create a Payment Link for course enrollment:
-
-**Parameters**:
-- **title** *(optional)*: Title that appears on the checkout page.
-- **description** *(optional)*: Details of what’s being paid for (e.g., course title).
-- **amount** *(optional)*: Set payment amount, or leave blank to let customers enter their preferred amount.
-- **currency**: Set the currency (e.g., `"GMD"`).
-- **redirect_url**: URL for successful payment redirection.
-- **cancel_url**: URL for canceled payments.
-- **custom_fields** *(optional)*: Extra fields to collect additional data, such as the specific course name and student ID.
+## Create a link
 
 <CodeGroup>
 ```javascript nodejs
-const courseLink = await modempay.paymentLinks.create({
-    title: "Course Payment",
-    description: "Payment for Full-Stack Development Course",
-    amount: 15000,
-    currency: "GMD",
-    redirect_url: "https://your-platform.com/payment-success",
-    cancel_url: "https://your-platform.com/payment-cancelled",
-    custom_fields: ["Course Name", "Student ID"],
+const link = await modempay.paymentLinks.create({
+  title: "Wax print dress",
+  description: "Size M, pick up at Kairaba Avenue",
+  amount: 3500,
+  currency: "GMD",
+  redirect_url: "https://yourshop.gm/thanks",
+  custom_fields: ["Pickup date"],
 });
+
+console.log(link.payment_link); // share this
+```
+
+```bash cURL
+curl -X POST https://api.modempay.com/v1/payment-links \
+  -H "Authorization: Bearer sk_test_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Wax print dress",
+    "description": "Size M, pick up at Kairaba Avenue",
+    "amount": 3500,
+    "currency": "GMD",
+    "redirect_url": "https://yourshop.gm/thanks",
+    "custom_fields": ["Pickup date"]
+  }'
 ```
 </CodeGroup>
 
-**Response:**
+The response includes the URL to share:
 
 ```json
 {
   "id": "ed46f172-0c9e-4d53-862d-0afbb85d6f88",
-  "min_amount": 0,
-  "min_amount_type": "fixed",
-  "metadata": {},
   "type": "single-charge",
-  "notification_channels": [],
   "status": "active",
-  "title": "Course Payment",
-  "description": "Payment for Full-Stack Development Course",
-  "amount": 15000,
+  "title": "Wax print dress",
+  "amount": 3500,
   "currency": "GMD",
-  "redirect_url": "https://your-platform.com/payment-success",
-  "cancel_url": "https://your-platform.com/payment-cancelled",
-  "custom_fields": [
-    "Course Name",
-    "Student ID"
-  ],
-  "unique_code": "aa57aa1a28655934962f1bee1bec517fd2c1f4de8abdcaf75b75d6313d8a055b",
-  "payment_link": "https://test.checkout.modempay.com/pay/aa57aa1a28655934962f1bee1bec517fd2c1f4de8abdcaf75b75d6313d8a055b",
-  "business_id": "a10a51ae-05c8-406e-968c-7b1d309a77e0",
-  "account_id": "7788dd90-3801-47a6-8597-b46eaa0a7d7d",
+  "custom_fields": ["Pickup date"],
+  "unique_code": "aa57aa1a28655934…",
+  "payment_link": "https://test.checkout.modempay.com/pay/aa57aa1a28655934…",
   "test_mode": true,
-  "updatedAt": "2025-02-13T12:11:17.695Z",
   "createdAt": "2025-02-13T12:11:17.695Z"
 }
 ```
 
----
-
-### 2. Retrieve a Payment Link
-
-Retrieve details for a specific Payment Link by using its unique `id`:
+## Manage links
 
 <CodeGroup>
 ```javascript nodejs
-const courseLink = await modempay.paymentLinks.retrieve(
-    "e9dd2d50-1dbf-49f4-bd4a-e129aae1aa4b"
-);
-```
-</CodeGroup>
+// Get one
+const link = await modempay.paymentLinks.retrieve("ed46f172-…");
 
----
+// Change it, or turn it off
+await modempay.paymentLinks.update("ed46f172-…", { status: "inactive" });
 
-### 3. Update a Payment Link
-
-To modify an existing Payment Link, such as updating the amount, title, or status:
-
-<CodeGroup>
-```javascript nodejs
-const courseLink = await modempay.paymentLinks.update(
-    "e9dd2d50-1dbf-49f4-bd4a-e129aae1aa4b",
-    {
-      status: "inactive",
-      title: "Updated Course Payment",
-    }
-);
-```
-</CodeGroup>
-
-**Updatable Fields**:
-- **status**: `"active"` or `"inactive"`.
-- **title**: Update the title shown on the checkout page.
-- **description**: Modify the course details or description.
-- **amount**: Adjust the payment amount.
-- **currency**: Change the currency.
-- **redirect_url**: Change the redirect URL.
-- **cancel_url**: Change the cancel URL.
-- **custom_fields**: Edit or add data fields.
-
----
-
-### 4. List Payment Links
-
-Get a list of all Payment Links for easy management:
-
-<CodeGroup>
-```javascript nodejs
+// List all
 const links = await modempay.paymentLinks.list();
+
+// Delete
+await modempay.paymentLinks.delete("ed46f172-…");
 ```
 </CodeGroup>
 
----
+You can update `title`, `description`, `amount`, `currency`, `redirect_url`, `cancel_url`, `custom_fields` and `status`. An `inactive` link can't be paid. Set it back to `active` to reopen it.
 
-### 5. Delete a Payment Link
+## Know when someone paid
 
-Remove an outdated or invalid Payment Link:
+Every payment through a link sends a `charge.succeeded` [webhook](/documentation/core/webhooks). The payload has `payment_link_id`, so you can tell which link was paid, and `custom_fields_values` with the customer's answers.
 
-<CodeGroup>
-```javascript nodejs
-await modempay.paymentLinks.delete("e9dd2d50-1dbf-49f4-bd4a-e129aae1aa4b");
-```
-</CodeGroup>
+You can also see every payment for a link in the dashboard.
 
---- 
+## Links, intents or invoices?
 
-### Key Benefits of Using Payment Links
-
-- **Flexible**: Customize details like amount, title, and form fields to fit each payment need.
-- **Reusable**: Payment Links can be set to active or inactive and reused as necessary.
-- **Easy Sharing**: Share the link through emails, SMS, or embed it on a website.
-
-With Modem Pay’s Payment Links, collecting payments becomes straightforward, whether you’re setting up one-time fees, subscriptions, or open-ended donations.
+| Use | When |
+| --- | --- |
+| **Payment link** | The same price for many customers, shared by hand. |
+| **[Payment intent](/documentation/payment-intents/create)** | One payment for one order, created by your server. |
+| **[Invoice](/billing/invoices/introduction)** | A bill for one customer, with line items, a due date and reminders. |

@@ -1,198 +1,82 @@
 ---
-title: Modem Pay Checkout Modal
+title: "Checkout pop-up"
+description: "Open Modem Pay's checkout in a pop-up on your page, and react to the result in JavaScript."
 ---
 
-Modem Pay's inline integration allows you to seamlessly add a payment option directly to your website, enabling your customers to make payments without leaving the page. This integration provides a smooth and efficient checkout process, ideal for businesses looking to enhance user experience and maximize conversion rates.
+The pop-up lets customers pay without leaving your site. You open it with one function call and get told when the payment finishes or the customer closes it.
 
-By using this integration, you can implement a "Pay Now" button that triggers a payment flow directly on your site, avoiding pop-ups or redirects. This is especially useful for scenarios like product purchases, service subscriptions, or event ticket sales.
+<Tip>
+  Just need a button? The [pay button](/documentation/payments/drop-in) wraps this pop-up in a single HTML tag.
+</Tip>
 
-## Example: Setting Up Inline Payment
+## Add it to your page
 
-```html html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modem Pay</title>
-    <link rel="stylesheet" href="https://api.modempay.com/dist/main.css" />
-    <script src="https://api.modempay.com/js/v1.js"></script>
-  </head>
-  <body>
-    <h1>Inline Payment Example</h1>
-    <button type="button" onclick="makePayment()" id="start-payment-button">
-      Pay Now
-    </button>
+```html
+<link rel="stylesheet" href="https://api.modempay.com/dist/main.css" />
+<script src="https://api.modempay.com/js/v1.js"></script>
 
-    <script>
-      function makePayment() {
-        const modal = ModemPayCheckout({
-          amount: 450,
-          public_key:
-            "pk_test_e073bbf9db47b09cebfdf2f7ec147d02116b69ea55135e1747a0bc8d47612f69",
-          payment_methods: "wallet,card,bank",
-          callback: (transaction) => {
-            console.log("Payment completed:", transaction);
-            // Handle post-payment actions
-            modal.close();
-          },
-          onClose: (cancelled) => {
-            if (cancelled) {
-              console.log("Payment was cancelled.");
-              // Handle payment cancellation
-            }
-          },
+<button type="button" onclick="pay()">Pay now</button>
+
+<script>
+  function pay() {
+    const modal = ModemPayCheckout({
+      public_key: "pk_test_...",
+      amount: 450,
+      title: "Course payment",
+      customer_email: "customer@example.com",
+      metadata: { order_id: "1042" },
+      callback: (transaction) => {
+        // The payment finished. Confirm it on your server before delivering.
+        fetch("/orders/1042/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transaction_id: transaction.id }),
         });
-      }
-    </script>
-  </body>
-</html>
-```
-
-## Calling the ModemPayCheckout() Function
-
-Let's examine the parameters provided when invoking `ModemPayCheckout()` in detail:
-
-| **Field**         | **Description**                                                     | **Example**                              |
-| ----------------- | ------------------------------------------------------------------- | ---------------------------------------- |
-| `amount`          | The amount to be charged.                                           | `450` (for GMD 450.00)                   |
-| `currency`        | The transaction currency (default: GMD).                            | `"GMD"`                                  |
-| `payment_methods` | Available payment methods (`card`, `wallet`, `bank`).               | `"card,wallet,bank"`                     |
-| `title`           | A short title describing the transaction.                           | `"Course Payment"`                       |
-| `description`     | Detailed description of the transaction.                            | `"Access to Premium Content"`            |
-| `customer`        | A unique identifier for the customer.                               | `"7e1908bb-bd62-4d20-9af7-3463a150fd98"` |
-| `customer_email`  | Customer's email address.                                           | `"customer@example.com"`                 |
-| `customer_name`   | Full name of the customer.                                          | `"John Doe"`                             |
-| `customer_phone`  | Customer's phone number.                                            | `"7000000"`                              |
-| `metadata`        | A JSON object for additional payment information.                   | `{ "order_id": "98765" }`                |
-| `return_url`      | URL to redirect to after successful payment.                        | `"https://yourwebsite.com/success"`      |
-| `cancel_url`      | URL to redirect to if the payment is canceled.                      | `"https://yourwebsite.com/cancel"`       |
-| `callback`        | Function to handle post-payment actions.                            | `(transaction) => { ... }`               |
-| `onClose`         | Function to handle when the modal is closed or payment is canceled. | `(cancelled) => { ... }`                 |
-
-<Warning> 
-**Public Key**
-
-Keep in mind that this is client-side code, so it utilizes your public key rather than your secret key.
-
-</Warning>
-
-## How Callbacks and onClose Work
-
-Here's an example that demonstrates how to use both the `callback` and `onClose` functions. The `callback` function sends a verification request to the backend in the background. Meanwhile, the `onClose` function handles the modal closure by displaying a "verifying" message if the background request is still in progress, or a thank-you message if the verification succeeds. If the verification fails, the user is prompted to retry or contact support.
-
-> **View**: [https://codepen.io/mercury-sms/embed/EaYNGOv](https://codepen.io/mercury-sms/embed/EaYNGOv?default-tab=html%2Cresult)
-
-### **`callback`: Handling Successful Payments**
-
-The `callback` function allows you to perform actions after a successful payment. For instance, you can verify the transaction, send a confirmation email, or update your database. The `transaction` parameter contains essential information about the payment.
-
-<Warning>
-  The `redirect_url` takes priority over the `callback`. If both are provided,
-  the `redirect_url` will be used.
-</Warning>
-
-```javascript javascript
-function makePayment() {
-  const modal = ModemPayCheckout({
-    public_key:
-      "pk_test_e073bbf9db47b09cebfdf2f7ec147d02116b69ea55135e1747a0bc8d47612f69",
-    // ...
-    callback: function (transaction) {
-      // Handle the transaction success and verify on backend
-      verifyTransactionOnBackend(transaction.id, modal);
-    },
-  });
-}
+        modal.close();
+      },
+      onClose: (cancelled) => {
+        if (cancelled) console.log("Customer closed checkout without paying.");
+      },
+    });
+  }
+</script>
 ```
 
 <Warning>
-  Always verify the payment on your server after the transaction, even if a
-  callback was used.
+  This code runs in the browser, so it uses your **public** key. Never put your secret key here.
 </Warning>
+
+## Options
+
+| Option | What it does | Example |
+| --- | --- | --- |
+| `public_key` | Your public key. Required. | `"pk_test_…"` |
+| `amount` | Amount to charge, in GMD. Required. | `450` |
+| `currency` | Defaults to `GMD`. | `"GMD"` |
+| `payment_methods` | Which kinds of method to offer. | `"wallet,card"` |
+| `title` | Short title shown at checkout. | `"Course payment"` |
+| `description` | Longer description. | `"Access to premium content"` |
+| `customer` | An existing [customer](/documentation/core/customers) ID. Their saved payment methods are offered. | `"7e1908bb-…"` |
+| `customer_name`, `customer_email`, `customer_phone` | Fill in checkout for the customer. | `"Awa Jallow"` |
+| `metadata` | Your own data. Comes back on the transaction and webhook. | `{ "order_id": "1042" }` |
+| `return_url` | Redirect here after payment, instead of calling `callback`. | `"https://yoursite.com/thanks"` |
+| `cancel_url` | Redirect here on cancel, instead of calling `onClose`. | `"https://yoursite.com/cart"` |
+| `callback` | Called with the transaction when the payment finishes. | `(transaction) => {}` |
+| `onClose` | Called when the pop-up closes. `cancelled` is `true` if the customer didn't pay. | `(cancelled) => {}` |
+
+## Redirects or callbacks?
+
+- If you set `return_url`, the customer is redirected after paying and `callback` is **not** called.
+- If you set `cancel_url`, the customer is redirected on cancel and `onClose` is **not** called.
+
+Use the callbacks to stay on the page, like a single-page app. Use the URLs for a classic "thank you" page.
+
 <Note>
-  Keep in mind that the `callback` function is triggered after the payment is
-  completed, even while the modal remains open. For an enhanced user experience,
-  you can combine the `callback` with the `onClose` handler.
+  `callback` fires as soon as the payment finishes, while the pop-up may still be open. Close it with `modal.close()` when you're ready.
 </Note>
 
-### **`onClose`: Handling Payment Cancellations**
+## Confirm on your server
 
-The `onClose` function is invoked when the customer cancels the payment by closing the modal. This is particularly useful for logging or notifying users of incomplete transactions.
+A browser callback can be faked. Before you deliver anything, check the payment on your server, either from the `charge.succeeded` [webhook](/documentation/core/webhooks) or by [looking it up](/documentation/core/transactions#get-a-transaction) with your secret key.
 
-```javascript javascript
-function makePayment() {
-  const modal = ModemPayCheckout({
-    public_key:
-      "pk_test_e073bbf9db47b09cebfdf2f7ec147d02116b69ea55135e1747a0bc8d47612f69",
-    // ...
-    onClose: function (cancelled) {
-      if (cancelled) {
-        // handle cancellation
-      }
-    },
-  });
-}
-```
-
-### Precedence Between `callback`, `return_url`, and `onClose`
-
-- **`return_url` vs `callback`:**  
-  If both are provided, the `return_url` will take precedence, and the user will be redirected to the specified URL after the payment instead of executing the `callback` function.
-- **`cancel_url` vs `onClose`:**  
-  If a `cancel_url` is provided, it overrides the `onClose` function, and the user will be redirected to the specified URL upon cancellation.
-
-## Webhooks
-
-If you have configured [webhook notifications](/documentation/core/webhooks) for your account, we will send a webhook when the payment is completed, as well as for any failed payment attempts. Here's an example of the webhook payload:
-
-```json
-{
-  "event": "charge.succeeded",
-  "payload": {
-    "id": "23419194-7324-4c2b-a74b-d8fba736e692",
-    "type": "payment",
-    "amount": 2500,
-    "currency": "GMD",
-    "payment_method": "qmoney",
-    "customer": "0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6",
-    "metadata": {},
-    "status": "completed",
-    "payment_link_id": null,
-    "custom_fields_values": {},
-    "business_id": "a10a51ae-05c8-406e-968c-7b1d309a77e0",
-    "account_id": "7788dd90-3801-47a6-8597-b46eaa0a7d7d",
-    "test_mode": true,
-    "customer_name": "Zypheron Kade",
-    "customer_phone": "7024725",
-    "customer_email": "calebchibuike110@gmail.com",
-    "createdAt": "2024-12-15T09:34:17.036Z",
-    "updatedAt": "2024-12-15T09:34:43.306Z",
-    "payment_account": ".... 9944",
-    "payment_metadata": {
-      "os": "MacOS",
-      "browser": "Firefox",
-      "ipAddress": "196.223.149.183",
-      "timestamp": "2024-12-15T09:34:43.266Z",
-      "deviceType": "Desktop",
-      "urlIPAddress": "https://db-ip.com/196.223.149.183",
-      "screenResolution": "1600x900"
-    },
-    "payment_intent_id": "273ac751-369d-4198-8340-da480208bded",
-    "transaction_reference": "VOAO1CFEN7",
-    "payment_method_id": "4dbaaec5-7a16-4908-8fd9-c3d2bd24f739"
-  }
-}
-```
-
-## Why Use Inline Payments?
-
-Inline payment integrations provide a frictionless experience by letting users complete payments without leaving your page. This approach minimizes drop-offs during checkout and enhances customer satisfaction.
-
-**Perfect for:**
-
-- **E-commerce Sites:** Add quick payment buttons on product pages.
-- **Subscription Services:** Charge for recurring services effortlessly.
-- **Event Ticketing:** Allow customers to book and pay on the same page.
-
-By incorporating features like `callback` and `onClose`, you gain full control over the payment flow and can provide a seamless experience tailored to your users' needs.
+See a full example with a "verifying…" state: [CodePen](https://codepen.io/mercury-sms/embed/EaYNGOv?default-tab=html%2Cresult).

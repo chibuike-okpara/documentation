@@ -1,127 +1,83 @@
 ---
-title: Manage Payment Intent
+title: "Check, list and cancel"
+description: "Confirm a payment on your server, see recent payments, and cancel ones you no longer need."
 ---
 
-The Modem Pay SDK provides straightforward methods to manage Payment Intents beyond creating them, allowing you to cancel, retrieve, and list Payment Intents easily. 
+## Check a payment
 
----
-
-#### Cancel a Payment Intent
-
-If a payment session is no longer needed, you can cancel a Payment Intent. Once canceled, the Payment Intent can’t be completed, which is useful for handling expired or abandoned payments.
-
-
-**Parameters:**
-- `id` *(string)*: The unique identifier of the Payment Intent you wish to cancel.
-
+Look a payment intent up by its `intent_secret`, which you got when you created it. Do this on your server before you deliver an order, if you're not using webhooks.
 
 <CodeGroup>
 ```javascript nodejs
-const paymentIntent = await modempay.paymentIntents.cancel(
-    "49ac6595-beba-480f-bc3d-33e5d4162c4c"
-);
+const intent = await modempay.paymentIntents.retrieve("bfa7eb3ea516ee15f80915a922c00242…");
+
+if (intent.status === "successful") {
+  // deliver the order
+}
 ```
 ```python python
-payment_intent = modem_pay.payment_intents.cancel(
-    "49ac6595-beba-480f-bc3d-33e5d4162c4c"
-)
+intent = modem_pay.payment_intents.retrieve("bfa7eb3ea516ee15f80915a922c00242…")
 ```
 ```php php
-$payment_intent = $modemPay->paymentIntents()->cancel(
-    "49ac6595-beba-480f-bc3d-33e5d4162c4c"
-);
+$intent = $modemPay->paymentIntents()->retrieve("bfa7eb3ea516ee15f80915a922c00242…");
 ```
 ```bash cURL
-cURL -X PATCH "https://api.modempay.com/v1/payments/<payment_intent_id>" \
-  -H "Authorization: Bearer <your_api_key>"
+curl "https://api.modempay.com/v1/payments/verify?intent_secret=bfa7eb3ea516ee15f80915a922c00242…" \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-**Response:**
-Returns the canceled Payment Intent object, updating its status to `"cancelled"`.
+You get the payment intent back, with its `status`, `amount`, `currency`, `metadata`, `link` and customer.
+
+<Tip>
+  Check `amount` as well as `status`. That way you know the customer paid the right amount for the right order.
+</Tip>
+
+## List payment intents
+
+<CodeGroup>
+```javascript nodejs
+const intents = await modempay.paymentIntents.list({ limit: 10 });
+```
+```python python
+intents = modem_pay.payment_intents.list(options={"limit": 10})
+```
+```php php
+$intents = $modemPay->paymentIntents()->list(['limit' => 10]);
+```
+```bash cURL
+curl "https://api.modempay.com/v1/payments?offset=0&limit=10" \
+  -H "Authorization: Bearer sk_test_..."
+```
+</CodeGroup>
 
 ```json
 {
-  ...
-  "status": "cancelled"
+  "data": [ ... ],
+  "meta": { "total": 31 }
 }
 ```
 
----
+Use `limit` and `offset` to page through. `meta.total` is how many there are in all.
 
-#### Retrieve a Payment Intent
+## Cancel a payment intent
 
-To check the current status or details of an existing Payment Intent, you can retrieve it by the secret. This is especially useful for confirming the progress or outcome of a payment attempt.
-
-
-**Parameters:**
-- `intent_secret` *(string)*: The unique secret of the Payment Intent you’re retrieving.
-
+Cancel an intent that should no longer be paid, for example when the customer empties their cart or the item sells out. A cancelled intent can't be paid.
 
 <CodeGroup>
 ```javascript nodejs
-const paymentIntent = await modempay.paymentIntents.retrieve(
-    "bfa7eb3ea516ee15f80915a922c00242a77629eb5b1efe34048b83a61925bbf5"
-);
+await modempay.paymentIntents.cancel("49ac6595-beba-480f-bc3d-33e5d4162c4c");
 ```
 ```python python
-payment_intent = modem_pay.payment_intents.retrieve(
-    "bfa7eb3ea516ee15f80915a922c00242a77629eb5b1efe34048b83a61925bbf5"
-)
+modem_pay.payment_intents.cancel("49ac6595-beba-480f-bc3d-33e5d4162c4c")
 ```
 ```php php
-$payment_intent = $modemPay->paymentIntents()->retrieve(
-    "49ac6595-beba-480f-bc3d-33e5d4162c4c"
-);
+$modemPay->paymentIntents()->cancel("49ac6595-beba-480f-bc3d-33e5d4162c4c");
 ```
 ```bash cURL
-cURL -X GET "https://api.modempay.com/v1/payments/verify?intent_secret=<intent_secret>" \
-  -H "Authorization: Bearer <your_api_key>"
+curl -X PATCH https://api.modempay.com/v1/payments/49ac6595-beba-480f-bc3d-33e5d4162c4c \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-**Response:**
-Returns the Payment Intent object, including attributes such as:
-- **status**: Shows if the intent is `"initialized"`, `"processing"`, `"successful"`, etc.
-- **amount, currency, description**: Reflects the payment details initially set.
-- **link**: The unique payment link for the intent.
-- **customer**: Linked customer details, if available.
-
----
-
-#### List Payment Intents
-
-To view a collection of recent Payment Intents, use the `list` method. This is ideal for tracking activity, viewing recent payment attempts, or obtaining an overview of intents by status.
-
-**Parameters:**
-- `limit` *(number, optional)*: The number of Payment Intents to retrieve (default is typically 10).
-
-
-<CodeGroup>
-```javascript nodejs
-const paymentIntents = await modempay.paymentIntents.list({ limit: 10 });
-```
-```python python
-payment_intents = modem_pay.payment_intents.list(options={"limit": 10})
-```
-```php php
-$payment_intents = $modemPay->paymentIntents()->list(['limit' => 10]);
-```
-```bash cURL
-cURL -X GET "https://api.modempay.com/v1/payments?offset=0&limit=10" \
-  -H "Authorization: Bearer <your_api_key>"
-```
-</CodeGroup>
-
-**Response:**
-
-```json
-{
-  "data": [],
-  "meta": {
-    "total": 31
-  }
-}
-
-```
-
+The intent's status becomes `cancelled` and you get a `payment_intent.cancelled` webhook.

@@ -1,248 +1,134 @@
 ---
-title: Modem Standard 
+title: "Your own checkout"
+description: "Create payments on your server, send customers to pay, and confirm with a webhook. A complete example."
 ---
 
-## 1. **Using Payment Sessions**
+This is the most flexible way to accept payments. Your server creates a **payment intent** for each order, so the price can't be changed in the browser, and you can add split payments, coupons, saved customers and your own references.
 
-Payment sessions simplify the payment process by redirecting the customer to a secure payment page hosted by Modem. You create a payment session on your backend, specifying details like the amount and currency. The customer completes the payment, and you verify the transaction via webhook or API. This method is ideal for a simple, secure checkout experience.
+```mermaid
+sequenceDiagram
+    participant C as Customer
+    participant S as Your server
+    participant M as Modem Pay
+    C->>S: Clicks "Checkout"
+    S->>M: Create payment intent
+    M-->>S: payment_link
+    S-->>C: Redirect to payment_link
+    C->>M: Pays
+    M-->>C: Back to your return_url
+    M->>S: Webhook: charge.succeeded
+    S->>S: Mark order paid
+```
 
-**Steps**:
-1. Create a payment session on your backend.
-2. Redirect the customer to Modem's secure payment page.
-3. Confirm the payment status via webhook or API.
+## Complete example
+
+A small Express app: a checkout button, a page to come back to, and a webhook endpoint.
 
 <CodeGroup>
 ```javascript server.js
 import express from "express";
-import path from "path";
 import ModemPay from "modem-pay";
 
-const modem = new ModemPay(
-  "sk_test_516aa853e1574295ed778eadc82b0a7128b18b628e4059f82e77041adf8692cb"
-);
-
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY);
 const app = express();
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+const DOMAIN = "http://localhost:7024";
 
-const YOUR_DOMAIN = "http://localhost:7024";
+// 1. Create the payment on the server, with the price from your database.
+app.post("/checkout", express.urlencoded({ extended: false }), async (req, res) => {
+  const order = { id: "1042", amount: 2000, title: "Stubborn Attachments" };
 
-app.post("/create-checkout-session", async (req, res) => {
-  const session = await modempay.sessions.create({
-    amount: 2000,
-    title: "Stubborn Attachments",
-    redirect_url: `${YOUR_DOMAIN}/success.html`,
-    cancel_url: `${YOUR_DOMAIN}/cancel.html`,
-  });
-
-  res.redirect(303, session.payment_link);
-});
-
-
-app.post('/verify', async (req, res) => {
-  const payload = req.body;
-  const signature = req.headers["x-modem-signature"];
-  const secret = process.env.MODEM_WEBHOOK_SECRET;
-
-  try {
-    const event = modempay.webhooks.composeEventDetails(payload, signature, secret);
-    // Process the event
-    
-    res.status(200).send("Webhook processed!");
-  } catch (error) {
-    res.status(400).send("Invalid signature!");
-  }
-})
-
-app.listen(7024, () => console.log("Running on port 7024"));
-
-```
-```html checkout.html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Buy cool new product</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <section>
-      <div class="product">
-        <img
-          src="https://i.imgur.com/EHyR2nP.png"
-          alt="The cover of Stubborn Attachments"
-        />
-        <div class="description">
-          <h3>Stubborn Attachments</h3>
-          <h5>GMD 2,000.00</h5>
-        </div>
-      </div>
-      <form action="/create-checkout-session" method="POST">
-        <button type="submit" id="checkout-button">Checkout</button>
-      </form>
-    </section>
-  </body>
-</html>
-```
-
-```html success.html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Thanks for your order!</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <section>
-    <p>
-      We appreciate your business! If you have any questions, please email
-      <a href="mailto:orders@example.com">orders@example.com</a>.
-    </p>
-  </section>
-</body>
-</html>
-```
-
-```html cancel.html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Checkout canceled</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <section>
-    <p>Forgot to add something to your cart? Shop around then come back to pay!</p>
-  </section>
-</body>
-</html>
-```
-
-</CodeGroup>
-
----
-
-## 2. **Using Direct Payment Intent**
-
-A payment intent gives you more control over the payment process. You create the payment intent on your backend, collect payment details directly from the customer, and confirm the payment. Afterward, you verify the transaction status via webhooks or API.
-
-**Steps**:
-1. Create a payment intent on your backend.
-2. Collect customer payment details.
-3. Confirm the payment and verify the status via webhook or API.
-
-
-<CodeGroup>
-```javascript server.js
-import express from "express";
-import path from "path";
-import bodyParser from "body-parser";
-import ModemPay from "modem-pay";
-
-const modem = new ModemPay(
-  "sk_test_516aa853e1574295ed778eadc82b0a7128b18b628e4059f82e77041adf8692cb"
-);
-
-const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-
-const YOUR_DOMAIN = "http://localhost:7024";
-
-app.post("/create-checkout-session", async (req, res) => {
   const intent = await modempay.paymentIntents.create({
-    ...req.body,
-    return_url: `${YOUR_DOMAIN}/success.html`,
-    cancel_url: `${YOUR_DOMAIN}/cancel.html`,
+    amount: order.amount,
+    title: order.title,
+    metadata: { order_id: order.id },
+    return_url: `${DOMAIN}/success.html`,
+    cancel_url: `${DOMAIN}/cancel.html`,
   });
 
-  res.redirect(303, intent.link);
+  // 2. Send the customer to pay.
+  res.redirect(303, intent.data.payment_link);
 });
 
-
-app.post('/verify', async (req, res) => {
-  const payload = req.body;
-  const signature = req.headers["x-modem-signature"];
-  const secret = process.env.MODEM_WEBHOOK_SECRET;
-
+// 3. Mark the order paid when Modem Pay tells you. Use the raw body to check the signature.
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  let event;
   try {
-    const event = modempay.webhooks.composeEventDetails(payload, signature, secret);
-    // Process the event
-    
-    res.status(200).send("Webhook processed!");
-  } catch (error) {
-    res.status(400).send("Invalid signature!");
+    event = modempay.webhooks.composeEventDetails(
+      req.body.toString("utf8"),
+      req.headers["x-modem-signature"],
+      process.env.MODEMPAY_WEBHOOK_SECRET,
+    );
+  } catch {
+    return res.status(400).send("Invalid signature");
   }
-})
 
-app.listen(7024, () => console.log("Running on port 7024"));
+  res.sendStatus(200);
 
+  if (event.event === "charge.succeeded") {
+    const orderId = event.payload.metadata?.order_id;
+    // markOrderPaid(orderId, event.payload.amount)
+  }
+});
+
+app.use(express.static("public"));
+app.listen(7024, () => console.log("Running on http://localhost:7024"));
 ```
-```html checkout.html
+
+```html public/index.html
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Buy cool new product</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
   <body>
-    <section>
-      <div class="product">
-        <img
-          src="https://i.imgur.com/EHyR2nP.png"
-          alt="The cover of Stubborn Attachments"
-        />
-        <div class="description">
-          <h3>Stubborn Attachments</h3>
-          <h5>GMD 2,000.00</h5>
-        </div>
-      </div>
-      <form action="/create-checkout-session" method="POST">
-        <input type="hidden" name="title" value="Stubborn Attachments" />
-        <input type="hidden" name="amount" value="2000" />
-        <input
-          type="hidden"
-          name="customer"
-          value="0f6e0912-2f2f-4d8b-bd68-ac8c97c44ae6"
-        />
-        <button type="submit" id="checkout-button">Checkout</button>
-      </form>
-    </section>
+    <h3>Stubborn Attachments</h3>
+    <p>GMD 2,000.00</p>
+    <form action="/checkout" method="POST">
+      <button type="submit">Checkout</button>
+    </form>
   </body>
 </html>
-
 ```
 
-```html success.html
+```html public/success.html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Thanks for your order!</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <section>
-    <p>
-      We appreciate your business! If you have any questions, please email
-      <a href="mailto:orders@example.com">orders@example.com</a>.
-    </p>
-  </section>
-</body>
+  <body>
+    <p>Thanks! We're confirming your payment and will email you shortly.</p>
+  </body>
 </html>
 ```
 
-```html cancel.html
+```html public/cancel.html
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Checkout canceled</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <section>
-    <p>Forgot to add something to your cart? Shop around then come back to pay!</p>
-  </section>
-</body>
+  <body>
+    <p>Payment cancelled. Your cart is still waiting for you.</p>
+  </body>
 </html>
 ```
-
 </CodeGroup>
+
+Run it with your test key and webhook secret, then use the [CLI](/documentation/cli) to get webhooks on your machine:
+
+```bash
+modempay listen --forward-url http://localhost:7024/webhook
+```
+
+## Why the price comes from the server
+
+The browser only sends "I want to check out". Your server decides the amount. Nobody can change the price by editing your page.
+
+## Going further
+
+<CardGroup cols={2}>
+  <Card title="All payment intent options" icon="sliders" href="/documentation/payment-intents/overview">
+    Customers, coupons, payment methods, callbacks and more.
+  </Card>
+  <Card title="Charge a wallet directly" icon="mobile-screen" href="/documentation/payment-intents/direct-charge">
+    Skip the checkout page and send the request to the customer's phone.
+  </Card>
+  <Card title="Split the payment" icon="arrows-split-up-and-left" href="/documentation/split-payments/initialize-payment">
+    Send part of each payment to a partner.
+  </Card>
+  <Card title="Refund" icon="rotate-left" href="/documentation/payment-intents/refund">
+    Give money back, in full or in part.
+  </Card>
+</CardGroup>

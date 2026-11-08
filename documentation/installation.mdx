@@ -1,12 +1,14 @@
 ---
-title: Installation
+title: "SDKs and libraries"
+sidebarTitle: "SDKs"
+description: "Install the Modem Pay library for Node.js, Python or PHP."
 ---
 
 ## Prerequisites
 
 Before installing, make sure you have the following:
 
-- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Node.js](https://nodejs.org/) (v16 or higher; the CLI needs v18)
 - [npm](https://www.npmjs.com/)
 - [Python](https://www.python.org/) (at least 3.8)
 - [PHP](https://www.php.net/) (at least 8.1)
@@ -81,9 +83,9 @@ echo $payment->data->payment_link;
 
 ---
 
-## (Optional) Install the Modem Pay CLI
+## Install the Modem Pay CLI (optional)
 
-For local webhook testing and simulation in a test environment, you can install the CLI globally:
+To receive test webhooks on your machine and send sample events:
 
 ```bash bash
 npm install -g modem-pay-cli
@@ -92,5 +94,5 @@ npm install -g modem-pay-cli
 Use `modempay listen` to test webhooks locally and `modempay trigger` to simulate events.
 
 <Tip>
-For full CLI usage, visit the [CLI docs](/documentation/core/webhook-cli).
+See [Modem Pay CLI](/documentation/cli) for everything it can do.
 </Tip>

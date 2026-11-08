@@ -1,43 +1,29 @@
 ---
-title: Mobile Money Payouts
+title: "Send a mobile money payout"
+sidebarTitle: "Mobile money"
+description: "Send money from your balance to a Wave or Afrimoney wallet."
 ---
 
-Mobile money is one of the most popular and accessible methods of transferring funds in The Gambia and across West Africa. Modem Pay supports seamless transfers to major mobile money providers.
+## What to send
 
+| Field | Required | What it is |
+| --- | --- | --- |
+| `amount` | Yes | How much to send, in GMD. At least 10. |
+| `currency` | Yes | `GMD`. |
+| `network` | Yes | `wave` or `afrimoney`. |
+| `account_number` | Yes | The wallet's phone number, 7 or 9 digits. |
+| `beneficiary_name` | Yes | The wallet holder's name, at least 3 characters. |
+| `narration` | No | A note for your records. |
+| `metadata` | No | Your own data, like an invoice ID. |
+| `callback_url` | No | An HTTPS URL to receive this payout's result. |
 
-### Supported Networks
+You also send an `Idempotency-Key` header: a unique value, like a UUID, for each payout. If you send the same request again with the same key, for example after a timeout, we return the first payout instead of paying twice.
 
-Here are the currently supported mobile money networks on Modem Pay:
+<Tip>
+  Not sure what it will cost? [Check the fee](/documentation/payouts/fees) first. The fee is taken from your balance on top of the amount.
+</Tip>
 
-| Network     | Key (`network`) | Notes                        |
-|-------------|------------------|------------------------------|
-| Africell    | `afrimoney`      | Instant transfers supported  |
-| Wave        | `wave`           | Instant transfers supported  |
-
-<Note>
-You must specify the correct `network` value in your transfer request.
-</Note>
-
-### Required Fields
-
-For mobile money transfers, you must provide the following in your request:
-
-| Field              | Required | Description                             |
-|--------------------|----------|-----------------------------------------|
-| `amount`           | ✅       | Amount to send |
-| `currency`         | ✅       | Currency code (e.g., `GMD`)             |
-| `network`          | ✅       | One of: `afrimoney`, `wave`   |
-| `account_number`   | ✅       | Recipient's mobile wallet number        |
-| `beneficiary_name` | ✅       | Name of the wallet holder               |
-| `narration`        | ⛔       | Optional transfer note                  |
-| `metadata`         | ⛔       | Optional structured data (JSON)         |
-
-
-### Initiate Payout
-<Note>
-When initiating a transfer, you must provide an <b>Idempotency-Key</b> in the request header. This ensures that if the same request is sent multiple times (for example, due to network issues), only one transfer will be processed. The <b>Idempotency-Key</b> should be a unique value (such as a UUID) for each transfer request.
-</Note>
-
+## Send a payout
 
 <CodeGroup>
 ```typescript nodejs
@@ -115,7 +101,7 @@ curl -X POST https://api.modempay.com/v1/transfers \
 ```
 </CodeGroup>
 
-### Payout Response
+## What you get back
 
 ```typescript json
 {
@@ -151,10 +137,7 @@ curl -X POST https://api.modempay.com/v1/transfers \
 }
 ```
 
-
-### Retrieve a Payout
-
-You can fetch the details of a specific transfer using its unique `id`.
+## Look up a payout
 
 <CodeGroup>
 ```typescript nodejs
@@ -175,13 +158,21 @@ curl -X GET https://api.modempay.com/v1/transfers/45eb796c... \
 ```
 </CodeGroup>
 
-This returns the full transfer object with all metadata, status, and transaction history.
+## Fraud checks
 
-### Fraud Monitoring & Security
+Every payout goes through automatic fraud checks. If one looks unusual:
 
-Modem Pay automatically monitors all payout transfers for suspicious or anomalous activity. If a transfer triggers our fraud detection systems, it is immediately flagged for review. When this happens:
+- its status becomes `pending_review`;
+- you get an email and a `transfer.flagged` webhook;
+- no more payouts can go to that number until you review it in the dashboard.
 
-- You will receive an email notification alerting you to the flagged transfer.
-- A `transfer.flagged` webhook event will be sent to your configured webhook endpoint.
+Review flagged payouts quickly so your normal payouts aren't held up.
 
-**Important:** No further transfers can be made to the affected account number until you review and resolve the flagged issue. This helps protect your business and recipients from potential fraud or misuse. Always investigate flagged transfers promptly to restore normal payout operations.
+## Common errors
+
+| Message | Fix |
+| --- | --- |
+| `Invalid transfer amount: … Must be at least 10.` | Send 10 GMD or more. |
+| `Invalid account number format. Must be 7 or 9 digits` | Send only digits, no country code or spaces. |
+| `Invalid network. Must be one of: afrimoney or wave` | Check the `network` value. |
+| `429` with a `code` such as `RATE_LIMIT` | Slow down and retry later. See [Errors](/documentation/errors#error-codes-you-may-see). |

@@ -1,10 +1,11 @@
 ---
-title: Coupons
+title: "Coupons"
+description: "Give discounts: a percentage or a fixed amount, with expiry dates, usage limits and minimum spends."
 ---
 
-ModemPay’s coupons let you offer discounts to customers with ease. Create coupons with `modempay.coupons.create()` to provide percentage or fixed-amount discounts (in GMD), set duration, redemption limits, and restrictions like minimum purchase amounts. Manage them with methods like `retrieve`, `list`, `update`, or `delete`. Apply coupons to a `PaymentIntent` to instantly reduce the transaction amount, perfect for promotions or loyalty rewards. Simple, flexible, and developer-friendly!
+Create a coupon once, then pass its `id` or `name` as `coupon` when you create a payment intent. Modem Pay checks the coupon's rules and takes the discount off the amount.
 
-### Creating a Coupon
+## Create a coupon
 
 Use `modempay.coupons.create()` to create a coupon. Coupons can offer a fixed amount or percentage discount and support options like duration, redemption limits, and restrictions.
 
@@ -74,7 +75,7 @@ This coupon gives 50 GMD off for first-time data bundle purchases of 200 GMD or 
 - `redeem_by` : Expiry date.
 - `restrictions` : Conditions like minimum_amount or first_time_transaction.
 
-### Retrieving a Coupon
+## Get a coupon
 
 Fetch a specific coupon’s details using `modempay.coupons.retrieve()`.
 
@@ -91,7 +92,7 @@ async function getCoupon(couponId) {
 ```
 </CodeGroup>
 
-### Listing Coupons
+## List coupons
 
 View all coupons with `modempay.coupons.list()`, with options to paginate or filter.
 
@@ -110,7 +111,7 @@ async function listCoupons() {
 
 This retrieves up to 5 coupons with "Fest" in their name.
 
-### Updating a Coupon
+## Update a coupon
 
 Modify a coupon’s properties (e.g., name, redemption limits) using `modempay.coupons.update()`.
 
@@ -133,7 +134,7 @@ async function updateCoupon(couponId) {
 
 This extends the coupon’s validity to July 31, 2025, and increases the redemption limit to 75.
 
-### Deleting a Coupon
+## Delete a coupon
 
 Permanently remove a coupon with `modempay.coupons.delete()`.
 
@@ -150,7 +151,7 @@ async function deleteCoupon(couponId) {
 ```
 </CodeGroup>
 
-### Applying a Coupon to a Payment Intent
+## Use a coupon on a payment
 
 Apply a coupon to a [PaymentIntent](/documentation/payment-intents/overview) to discount the transaction. Include the coupon `id` or `name` in the `coupon` field when creating a [PaymentIntent](/documentation/payment-intents/overview).
 
@@ -180,13 +181,13 @@ If the coupon offers 15% off and the original amount is 150 GMD, the discounted 
 - If valid, the discount (`percent_off` or `amount_off`) is applied to the `PaymentIntent`’s amount.
 - The coupon’s `times_redeemed` increments upon successful application.
 
-### Best Practices
+## Tips
 
 - **Validate Restrictions**: Ensure the coupon’s `minimum_amount` aligns with your pricing.
 - **Test Thoroughly**: Use test API keys to simulate coupon scenarios.
 - **Monitor Usage**: Track active coupons and redemptions with `modempay.coupons.list()`.
 
-### Troubleshooting
+## When a coupon doesn't apply
 
 - **Invalid Coupon**: Verify the coupon ID and ensure `valid: true`.
 - **Restrictions Not Met**: Check if the `PaymentIntent` meets `minimum_amount` or `first_time_transaction` requirements.

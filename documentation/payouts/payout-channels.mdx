@@ -1,0 +1,66 @@
+---
+title: "Payout channels"
+sidebarTitle: "Payout channels"
+description: "See where your account can send money right now: which wallets and banks, in which country."
+---
+
+A **payout channel** is a place you can send money to, like Wave or Afrimoney. The list changes over time: new channels are added, and a channel can be switched off for a while if its provider has problems. Ask for the list instead of hard-coding it.
+
+## List channels
+
+`GET /v1/transfers/payout-channels`
+
+```bash cURL
+curl "https://api.modempay.com/v1/transfers/payout-channels?type=mobile_money" \
+  -H "Authorization: Bearer sk_test_..."
+```
+
+A restricted key needs the `transfers:read` permission.
+
+### Filters
+
+All filters are optional.
+
+| Query     | What it does                                        |
+| --------- | --------------------------------------------------- |
+| `type`    | `mobile_money` or `bank`. Leave it out to get both. |
+| `country` | Only channels in this country, like `gm`.           |
+
+Only channels that are switched on right now are returned.
+
+### Response
+
+```json
+{
+  "data": [
+    { "code": "1001", "name": "Wave", "type": "mobile_money", "country": "gm" },
+    {
+      "code": "1002",
+      "name": "Afrimoney",
+      "type": "mobile_money",
+      "country": "gm"
+    }
+  ]
+}
+```
+
+<Note>The codes above are examples. Always use the codes the API returns.</Note>
+
+| Field     | What it is                                       |
+| --------- | ------------------------------------------------ |
+| `code`    | The channel's ID. Four digits. It never changes. |
+| `name`    | A name you can show your users.                  |
+| `type`    | `mobile_money` or `bank`.                        |
+| `country` | The two-letter country code.                     |
+
+## Use it in your app
+
+- **Build your payout form from it.** Show only the channels in the list, so users can't pick one that's unavailable.
+- **Cache it for a few minutes.** It changes rarely, but don't keep it for days.
+- **Handle a channel being switched off.** If you send a payout to a channel that's off, you get a `400` saying the channel is currently unavailable, and no money moves. Try again later or offer another channel.
+
+<Warning>
+  To send a payout today, set `network` to `wave` or `afrimoney`, as shown in
+  [Mobile money payouts](/documentation/payouts/mobile-money). Bank channels may
+  appear in this list before bank payouts open in the API.
+</Warning>

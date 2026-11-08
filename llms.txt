@@ -1,61 +1,96 @@
-# ModemPay
+# Modem Pay
 
-ModemPay is a payment infrastructure that enables businesses to collect payments and manage payouts across multiple channels in Africa.
+> Modem Pay is a payments API for The Gambia. Accept Wave, Afrimoney, QMoney, APS, Yonna, card and stablecoin payments, send mobile money payouts, split revenue with partners, and send invoices. REST API at https://api.modempay.com/v1, authenticated with `Authorization: Bearer sk_...`. SDKs: modem-pay (npm), modempay (pip), modempay/modempay-php (Composer).
 
-## Getting Started
+## Get started
 
-- [Quickstart Guide](https://docs.modempay.com/documentation/quickstart): Set up your account and start collecting payments with HTML Checkout or SDK
-- [Installation](https://docs.modempay.com/documentation/installation): Install ModemPay SDK in your preferred programming language
-- [Authentication](https://docs.modempay.com/documentation/authentication): Learn how to authenticate API requests using API keys
-- [Handling Errors](https://docs.modempay.com/documentation/errors): Understand error codes and how to handle API errors
+- [Modem Pay documentation](https://docs.modempay.com/documentation/introduction): Accept mobile money and card payments, pay people, split revenue and settle stablecoins in dalasi, all through one API.
+- [Quickstart](https://docs.modempay.com/documentation/quickstart): Accept your first payment with Modem Pay in a few minutes.
+- [SDKs and libraries](https://docs.modempay.com/documentation/installation): Install the Modem Pay library for Node.js, Python or PHP.
+- [API keys](https://docs.modempay.com/documentation/authentication): How to authenticate, and how to limit what each key can do.
+- [Test mode and going live](https://docs.modempay.com/documentation/test-mode): Build without moving real money, then switch on live payments with confidence.
+- [Errors](https://docs.modempay.com/documentation/errors): What errors look like, what each status means, and when to retry.
 
-## Core API Resources
+## Developer tools
 
-- [Balances](https://docs.modempay.com/documentation/core/balances): Check your account balance and transaction history
-- [Managing Customers](https://docs.modempay.com/documentation/core/customers): Create and manage customer profiles
-- [Mandate](https://docs.modempay.com/documentation/core/mandates): Set up recurring payment mandates
-- [Payment Links](https://docs.modempay.com/documentation/core/payment-links): Generate payment links for quick checkouts
-- [Transactions](https://docs.modempay.com/documentation/core/transactions): View and manage all payment transactions
-- [Webhooks](https://docs.modempay.com/documentation/core/webhooks): Configure webhooks for real-time payment notifications
-- [Webhook Tester (CLI)](https://docs.modempay.com/documentation/core/webhook-cli): Test webhook integrations using CLI tool
-- [Coupons](https://docs.modempay.com/documentation/core/coupons): Create and manage discount coupons
+- [Modem Pay CLI](https://docs.modempay.com/documentation/cli): Get test webhooks on your laptop, send sample events and create test payments, all from your terminal.
 
-## Payment Intents
+## Accept payments
 
-- [Payment Intents Overview](https://docs.modempay.com/documentation/payment-intents/overview): Understand the Payment Intent object and its properties
-- [Create a Payment Intent](https://docs.modempay.com/documentation/payment-intents/create): Generate payment intents with various configurations
-- [Direct Charge](https://docs.modempay.com/documentation/payment-intents/direct-charge): Process direct charges without customer interaction
-- [Payment Intent Callbacks](https://docs.modempay.com/documentation/payment-intents/callback_url): Handle callbacks after payment completion
-- [Manage Payment Intent](https://docs.modempay.com/documentation/payment-intents/management): Update and retrieve payment intent status
+- [Choose an integration](https://docs.modempay.com/documentation/payments/overview): Five ways to accept payments, from no code at all to full control.
+- [Payment links](https://docs.modempay.com/documentation/core/payment-links): A link you share anywhere. Customers open it and pay. No website or code needed.
+- [Pay button](https://docs.modempay.com/documentation/payments/drop-in): One HTML tag adds a Modem Pay button to any page. No build step, no framework.
+- [Checkout pop-up](https://docs.modempay.com/documentation/payments/modem-inline): Open Modem Pay's checkout in a pop-up on your page, and react to the result in JavaScript.
+- [HTML Checkout](https://docs.modempay.com/documentation/payments/html-checkout): Accept payments with a plain HTML form. No backend, no JavaScript.
+- [Your own checkout](https://docs.modempay.com/documentation/payments/custom): Create payments on your server, send customers to pay, and confirm with a webhook. A complete example.
 
-## Split Payments
+## Payment intents
 
-- [Split Payments Overview](https://docs.modempay.com/documentation/split-payments/overview): Distribute payments across multiple recipients
-- [Sub-Accounts](https://docs.modempay.com/documentation/split-payments/sub-accounts): Create and manage sub-accounts for split payments
-- [Initialize Split Payment](https://docs.modempay.com/documentation/split-payments/initialize-payment): Set up payment splitting for transactions
+- [Payment intents](https://docs.modempay.com/documentation/payment-intents/overview): The object behind every payment: create one on your server, send the customer to pay, then confirm the result.
+- [Create a payment intent](https://docs.modempay.com/documentation/payment-intents/create): Four common ways to create a payment, from just an amount to a saved customer's wallet.
+- [Direct charge](https://docs.modempay.com/documentation/payment-intents/direct-charge): Charge a mobile wallet directly. The customer just confirms on their phone.
+- [Check, list and cancel](https://docs.modempay.com/documentation/payment-intents/management): Confirm a payment on your server, see recent payments, and cancel ones you no longer need.
+- [Callback URL](https://docs.modempay.com/documentation/payment-intents/callback_url): Send one payment's events to its own URL, instead of your account webhook.
+- [Refunds](https://docs.modempay.com/documentation/payment-intents/refund): Give a customer their money back, in full or in part.
 
-## Payouts
+## Customers and discounts
 
-- [Payouts Overview](https://docs.modempay.com/documentation/payouts/overview): Send money to mobile money accounts
-- [Mobile Money Payouts](https://docs.modempay.com/documentation/payouts/mobile-money): Transfer funds to mobile money networks
-- [Payout Fees](https://docs.modempay.com/documentation/payouts/fees): Calculate transfer fees before sending payouts
+- [Customers](https://docs.modempay.com/documentation/core/customers): Save the people who pay you, so checkout is faster next time.
+- [Mandates](https://docs.modempay.com/documentation/core/mandates): Proof that a customer agreed to save their payment method.
+- [Coupons](https://docs.modempay.com/documentation/core/coupons): Give discounts: a percentage or a fixed amount, with expiry dates, usage limits and minimum spends.
 
-- [Virtual Terminals Overview](https://docs.modempay.com/documentation/virtual-terminal): Set up physical payment stations for in-person payments
-- [Create Virtual Terminal](https://docs.modempay.com/documentation/virtual-terminal#create-a-virtual-terminal): Generate a terminal and real-time WhatsApp notifications for your staff or counter
+## Send money
 
+- [Payouts](https://docs.modempay.com/documentation/payouts/overview): Send money from your Modem Pay balance to mobile wallets, one person or a thousand at a time.
+- [Send a mobile money payout](https://docs.modempay.com/documentation/payouts/mobile-money): Send money from your balance to a Wave or Afrimoney wallet.
+- [Bulk payouts](https://docs.modempay.com/documentation/payouts/bulk-payout)
+- [Payout fees](https://docs.modempay.com/documentation/payouts/fees): See exactly what a payout will cost before you send it.
+- [Reverse a payout](https://docs.modempay.com/documentation/payouts/reversals): Pull back a Wave payout sent by mistake, within 3 days.
 
-## Billing
+## Split payments
 
-- [Invoices Introduction](https://docs.modempay.com/billing/invoices/introduction): Create and manage invoices for your customers
+- [Split payments](https://docs.modempay.com/documentation/split-payments/overview)
+- [Sub-accounts](https://docs.modempay.com/documentation/split-payments/sub-accounts)
+- [Sub-account groups](https://docs.modempay.com/documentation/split-payments/sub-account-groups)
+- [Split a payment](https://docs.modempay.com/documentation/split-payments/initialize-payment)
 
-## Inline Payments
+## Stablecoins
 
-- [Inline Payments Overview](https://docs.modempay.com/payments/overview): Embed payment forms directly into your website
+- [Stablecoins overview](https://docs.modempay.com/documentation/stablecoins/overview): Accept USDT and USDC, or convert them into dalasi, without handling wallets or blockchains yourself.
+- [Accept stablecoin payments](https://docs.modempay.com/documentation/stablecoins/accept-payments): Charge customers in USD and let them pay with USDT or USDC on a hosted page.
+- [Convert stablecoins to dalasi](https://docs.modempay.com/documentation/stablecoins/convert-to-dalasi): Send USDT or USDC and receive Gambian dalasi in your balance or a mobile money wallet. Also known as an off-ramp.
+- [Price estimates](https://docs.modempay.com/documentation/stablecoins/price-estimates): See what a conversion will cost or pay out before creating it.
+- [Resell conversions](https://docs.modempay.com/documentation/stablecoins/resellers): Offer stablecoin-to-dalasi conversions on your own platform and earn a markup.
 
-## Laravel Integration
+## In person
 
-- [Laravel Quickstart](https://docs.modempay.com/laravel/quickstart): Integrate ModemPay with Laravel applications
+- [Virtual terminals](https://docs.modempay.com/documentation/virtual-terminal): A QR code for every counter, with instant WhatsApp alerts when someone pays.
 
-## Plugins
+## Your money
 
-- [WooCommerce Plugin](https://docs.modempay.com/plugins/woocommerce): Accept payments in your WooCommerce store
+- [Balances](https://docs.modempay.com/documentation/core/balances): Where your money is, and when you can spend it.
+- [Transactions](https://docs.modempay.com/documentation/core/transactions): Every payment attempt and its result: who paid, how, how much, and when.
+
+## Webhooks and testing
+
+- [Webhooks](https://docs.modempay.com/documentation/core/webhooks): Get told the moment a payment, payout, customer or invoice changes.
+
+## Billing: Invoices
+
+- [Invoices](https://docs.modempay.com/billing/invoices/introduction): Itemised bills with due dates, reminders and overdue tracking. Also the simplest way to charge subscriptions.
+- [Send your first invoice](https://docs.modempay.com/billing/invoices/quickstart)
+- [Invoice types](https://docs.modempay.com/billing/invoices/types)
+- [Invoice lifecycle](https://docs.modempay.com/billing/invoices/lifecycle)
+- [Invoices API](https://docs.modempay.com/billing/invoices/api-reference)
+
+## Plugins and frameworks: Laravel
+
+- [Laravel quickstart](https://docs.modempay.com/laravel/quickstart)
+- [Configuration](https://docs.modempay.com/laravel/configuration)
+- [Usage](https://docs.modempay.com/laravel/usage)
+- [Webhooks](https://docs.modempay.com/laravel/webhooks)
+
+## Plugins and frameworks: WordPress
+
+- [WooCommerce](https://docs.modempay.com/plugins/woocommerce)
+- [WordPress payment form](https://docs.modempay.com/plugins/payment-form)

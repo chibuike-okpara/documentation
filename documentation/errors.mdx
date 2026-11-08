@@ -1,99 +1,110 @@
 ---
-title: Handling Errors
+title: "Errors"
+description: "What errors look like, what each status means, and when to retry."
 ---
 
-Modem Pay returns errors in a consistent JSON format to make it easy to handle issues in your application. Each error includes a simple message explaining the issue, with HTTP status codes indicating the type of error.
-
-#### Error Format
-
-All error responses follow this structure:
+When a request fails, Modem Pay returns an HTTP status of 400 or higher and a JSON body with a `message` you can show or log. Many errors also have a `code` your code can check.
 
 ```json
 {
-  "message": "Description of the error",
-  "statusCode": "Error status code"
+  "message": "This API key does not have the 'refunds:write' permission required for this request.",
+  "code": "insufficient_scope",
+  "required_scope": "refunds:write"
 }
 ```
 
-#### Common Status Codes
-
-- **4xx Client Errors**: These indicate issues in the request sent to the server.
-  - **400 Bad Request**: The request was invalid or missing required fields.
-  - **401 Unauthorized**: Missing or invalid API key.
-  - **403 Forbidden**: You don't have permission to access this resource.
-  - **404 Not Found**: The requested resource doesn't exist or was entered incorrectly.
-  - **405 Method Not Allowed**: The HTTP method used is not supported for this endpoint.
-  - **422 Unprocessable Entity**: The request was well-formed but contained semantic errors.
-  - **427 Too Many Requests**: You've exceeded the rate limit for API requests.
-
-- **5xx Server Errors**: These signify an issue on Modem Pay’s end.
-  - **500 Internal Server Error**: General server error; retry the request or contact support if it persists.
-
-#### Handling Errors
-
-Check the `message` field in the response to understand the cause of the error. If the status code is 400 or higher, review your request parameters and API key to ensure they meet Modem Pay's requirements.
-
-## Error Retries
-
-Modem Pay offers automatic retry handling for certain types of errors. By default, Modem Pay retries up to three times if a request fails due to transient issues, such as network errors or temporary server overloads. This is configurable via the `maxRetries` option, which you can set during initialization:
-
-<CodeGroup>
-```javascript javascript
-const modempay = new ModemPay(process.env.MODEM_API_KEY, {
-  maxRetries: 3, // Sets the maximum number of retry attempts
-});
-```
-```python python
-modem_pay = ModemPay(api_key="YOUR_MODEM_PAY_API_KEY", config={"maxRetries": 3})
-```
-</CodeGroup>
-
-### When Retries Occur
-
-Retries are triggered for errors that are likely temporary, typically with **5xx server errors**. Each retry is delayed slightly to give the server time to recover, helping ensure more reliable payment handling.
-
-### Adjusting or Disabling Retries
-
-To reduce or increase the retry count, simply adjust the `maxRetries` value. Setting it to `0` disables retries entirely:
-
-<CodeGroup>
-```javascript javascript
-const modempay = new ModemPay(process.env.MODEM_API_KEY, {
-  maxRetries: 0, // Disables retries
-});
-```
-```python python
-modem_pay = ModemPay(api_key="YOUR_MODEM_PAY_API_KEY", config={"maxRetries": 0})
-```
-</CodeGroup>
-
 <Tip>
-To disable error retry logs, add `RETRY_LOGGING=false` to your `.env` file. This will suppress the retry attempt logs while still performing the retries.
+  Check `code` in your logic, not `message`. Messages are written for people and may change. Codes don't.
 </Tip>
 
-## Request Timeouts
+## Status codes
 
-Modem Pay lets you configure request timeouts to prevent your application from waiting indefinitely for a response. By default, requests will time out after 60 seconds (1 minute).
+| Status | Meaning | What to do |
+| --- | --- | --- |
+| `400` | The request is missing something or has a wrong value. Validation errors list every problem in `message`, separated by commas. | Fix the request. Don't retry it unchanged. |
+| `401` | No API key, or the key is wrong, revoked or expired. | Check the key. See [API keys](/documentation/authentication#when-a-key-is-refused). |
+| `403` | The key works but isn't allowed to do this, or the IP address isn't allowed. | Add the permission or IP address, or use another key. |
+| `404` | The thing you asked for doesn't exist, or belongs to another account or mode. | Check the ID, and that you're using a test key for test data and a live key for live data. |
+| `409` | The request clashes with the current state, for example a duplicate. | Fetch the latest state before trying again. |
+| `410` | The endpoint has been removed. | Move to the endpoint named in `message`. |
+| `413` | The request body is too large. | Send less data per request. |
+| `429` | Too many requests. | Wait, then retry. See [Rate limits](#rate-limits). |
+| `500` | Something went wrong on our side. | Retry with backoff. If it keeps happening, email support. |
+| `503` | A service we depend on is busy or unavailable. | Retry shortly. |
 
-You can easily customize the timeout duration by specifying the timeout option (in seconds) when initializing the Modem Pay client:
+## Error codes you may see
+
+| `code` | Status | Meaning |
+| --- | --- | --- |
+| `authorization_invalid` | 401 | The `Authorization` header isn't `Bearer <secret key>`. |
+| `api_key_missing` | 401 | The header has no key. |
+| `public_key_not_allowed` | 401 | A public key was sent where a secret key is needed. |
+| `api_key_invalid` | 401 | The key doesn't exist or doesn't match the mode. |
+| `api_key_revoked` | 401 | The key was revoked. |
+| `api_key_expired` | 401 | The key has expired. `expired_at` says when. |
+| `ip_not_allowed` | 403 | The request came from an IP address that isn't on the allowlist. |
+| `insufficient_scope` | 403 | The key is missing the permission in `required_scope`. |
+| `route_not_permitted` | 403 | Restricted keys can't call this endpoint. |
+| `per_transfer_limit_exceeded` | 403 | A payout is above the key's per-payout limit. |
+| `daily_transfer_limit_exceeded` | 403 | The payout would take the key over its daily limit. |
+| `RATE_LIMIT` | 429 | Too many payout requests in a short time. |
+| `VELOCITY_LIMIT` | 429 | The account has sent too much value in the current window. |
+| `CONCURRENCY_LIMIT` | 429 | Too many payouts are already being processed. |
+| `ACCOUNT_THROTTLED` | 429 | Payouts are paused for a while after many rejected payouts. |
+| `INSUFFICIENT_LIQUIDITY` | 503 | Payout capacity is used up for now. Retry shortly. |
+| `BATCH_TOO_LARGE` | 400 | A bulk payout has too many items. The limit is 1,000. |
+
+## Rate limits
+
+Requests to `/v1` are limited per business over a rolling 15-minute window. Payouts have their own, stricter limits to protect your balance.
+
+When you hit a limit you get a `429`:
+
+```json
+{
+  "message": "Too many requests from this account, please try again in 312 seconds.",
+  "retryAfter": 312
+}
+```
+
+Wait `retryAfter` seconds before trying again. Responses also carry the standard `RateLimit` headers, so you can slow down before you reach the limit.
+
+Need a higher limit? Email [info@modempay.com](mailto:info@modempay.com) with your expected volume.
+
+## Retries in the SDKs
+
+The SDKs retry failed requests that are likely to be temporary, such as network errors and `5xx` responses. They try up to **3 times** by default, waiting a little longer each time.
 
 <CodeGroup>
-```javascript javascript
-const modempay = new ModemPay(process.env.MODEM_API_KEY, {
-  timeout: 20, // Timeout set to 20 seconds
+```javascript nodejs
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY, {
+  maxRetries: 3, // 0 turns retries off
 });
 ```
 ```python python
-modem_pay = ModemPay(api_key="YOUR_MODEM_PAY_API_KEY", config={"timeout": 20})
+modem_pay = ModemPay(api_key="sk_test_...", config={"maxRetries": 3})
 ```
 </CodeGroup>
 
-## Rate Limiting
+To hide the retry log lines but keep retrying, set `RETRY_LOGGING=false` in your environment.
 
-To maintain the stability and security of our platform, **Modem Pay** enforces rate limiting on all API requests.
+<Warning>
+  Before retrying a payout yourself, send the same `Idempotency-Key` header as the first attempt. Then a retry can never pay someone twice. See [Mobile money payouts](/documentation/payouts/mobile-money#send-a-payout).
+</Warning>
 
-Each API key is allowed up to **100 consecutive requests** within a **15-minute rolling window**. If this limit is exceeded, further requests will be temporarily blocked until the window resets.
+## Timeouts
 
-We recommend implementing retries with exponential backoff and monitoring your request patterns to stay within the allowed limits.
+SDK requests time out after **60 seconds** by default. You can change this (in seconds):
 
-If your application requires a higher throughput, please contact us at **[info@modempay.com](mailto:info@modempay.com)** to discuss increased rate limits based on your business needs.
+<CodeGroup>
+```javascript nodejs
+const modempay = new ModemPay(process.env.MODEMPAY_SECRET_KEY, {
+  timeout: 20,
+});
+```
+```python python
+modem_pay = ModemPay(api_key="sk_test_...", config={"timeout": 20})
+```
+</CodeGroup>
+
+If a payment or payout request times out, don't assume it failed. Look it up by ID or reference first, or wait for the webhook.

@@ -1,12 +1,12 @@
 ---
-title: Managing Customers
+title: "Customers"
+description: "Save the people who pay you, so checkout is faster next time."
 ---
 
-The Modem Pay API’s customer management is built to help you store and manage customer details efficiently. Below are detailed steps and example requests for creating, retrieving, updating, deleting, and listing customers, as well as listing their payment methods. This allows you to manage customer profiles and payment preferences seamlessly.
+A customer holds a name, email and phone number. Pass a customer's `id` when you create a payment intent and checkout is filled in for them. If they chose to save a payment method before, it's offered too.
 
----
 
-#### **Create a Customer**
+## Create a customer
 
 To create a customer, use the `modempay.customers.create()` method, which allows you to add key information like the customer's name, email, phone number, and an optional starting balance. The `distinct` option, when set to `true`, checks for existing customers with matching fields (e.g., email) to avoid duplicate entries. If `distinct` is omitted or set to `false`, a new customer entry will be created without duplicate checks.
 
@@ -61,7 +61,7 @@ cURL -X POST "https://api.modempay.com/v1/customers" \
 
 ---
 
-#### **Retrieve a Customer**
+## Retrieve a customer
 
 To fetch a customer’s details, use `modempay.customers.retrieve(customerId)`. Replace `customerId` with the customer’s unique ID.
 
@@ -101,7 +101,7 @@ cURL -X GET "https://api.modempay.com/v1/customers/8a8c8a0e-c5d2-4692-a94b-25284
 
 ---
 
-#### **Update a Customer**
+## Update a customer
 
 Update a customer's information using `modempay.customers.update(customerId, params)`. Specify the customer ID and the fields to update.
 
@@ -151,7 +151,7 @@ cURL -X PUT "https://api.modempay.com/v1/customers/<customer_id>" \
 
 ---
 
-#### **Delete a Customer**
+## Delete a customer
 
 Remove a customer from your records using `modempay.customers.delete(customerId)`. This action is irreversible.
 
@@ -172,7 +172,7 @@ cURL -X DELETE "https://api.modempay.com/v1/customers/<customer_id>" \
 
 ---
 
-#### **List All Customers**
+## List customers
 
 To view all customers, use `modempay.customers.list()`. This returns a list of customers, with pagination options if there are many entries.
 
@@ -226,7 +226,7 @@ const customers = await modempay.customers.list({ limit:2, search: "caleb" })
 
 ---
 
-#### **List Payment Methods for a Customer**
+## List a customer's saved payment methods
 
 To retrieve the payment methods associated with a specific customer, use their customer ID. This is useful to manage or display available payment methods during checkout.
 

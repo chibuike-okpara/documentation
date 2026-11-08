@@ -1,40 +1,42 @@
 ---
-title: Overview
+title: "Choose an integration"
+description: "Five ways to accept payments, from no code at all to full control."
 ---
 
-Find a guide to integrate Modem Pay's payments APIs.
+All five options use the same checkout, accept the same payment methods and send the same webhooks. They differ in how much you build.
 
-<CardGroup cols={2}>
-  <Card
-    title="Modem Pay Button"
-    icon="code"
-    href="/documentation/payments/drop-in"
-  >
-    Drop-in payment button for Wave, QMoney, and AfriMoney; no frameworks, no
-    build tools required.
-  </Card>
-  <Card
-    title="Inline Modem Payment"
-    icon="code"
-    href="/documentation/payments/modem-inline"
-  >
-    Integrate our JavaScript library to enable seamless and efficient payment
-    processing with minimal setup.
-  </Card>
-  <Card
-    title="HTML Checkout"
-    icon="html5"
-    href="/documentation/payments/html-checkout"
-  >
-    A straightforward payment solution using HTML forms. Perfect for businesses
-    seeking simplicity and fast deployment.
-  </Card>
-  <Card
-    title="Modem Standard (Using the SDK)"
-    icon="wrench"
-    href="/documentation/payments/custom"
-  >
-    Build your own UI and connect to Modem's backend APIs for a fully customized
-    payment experience tailored to your brand.
-  </Card>
-</CardGroup>
+| | Code needed | Customer pays on | Key used | Best for |
+| --- | --- | --- | --- | --- |
+| [Payment links](/documentation/core/payment-links) | None | Modem Pay's page | — | Selling on WhatsApp, Instagram, by SMS |
+| [Pay button](/documentation/payments/drop-in) | One HTML tag | A pop-up on your page | Public | Simple websites, donations |
+| [HTML Checkout](/documentation/payments/html-checkout) | One HTML form | Modem Pay's page | Public | Static sites with no backend |
+| [Checkout pop-up](/documentation/payments/modem-inline) | A few lines of JavaScript | A pop-up on your page | Public | Shops that want to react in the browser |
+| [Your own checkout](/documentation/payments/custom) | Server code | Modem Pay's page or your own UI | Secret | Apps with a backend, split payments, saved customers |
+
+<Tip>
+  Not sure? Start with **payment intents** from your server ([Quickstart](/documentation/quickstart)). It works for any app, and you can add the pop-up or button later.
+</Tip>
+
+## Payment methods
+
+Customers choose how to pay at checkout. Which methods appear depends on your account and country.
+
+| Method | Type |
+| --- | --- |
+| Wave | Mobile wallet |
+| Afrimoney | Mobile wallet |
+| QMoney | Mobile wallet |
+| APS | Mobile wallet |
+| Yonna | Mobile wallet |
+| Card | Bank card |
+| USDT, USDC | [Stablecoins](/documentation/stablecoins/accept-payments) |
+
+To list what's switched on for your account, call `GET /v1/payments/gateways`.
+
+To limit the choice for one payment, set `payment_methods` when you create it, for example `["wallet"]` to hide cards. To skip checkout and charge one wallet directly, use [direct charge](/documentation/payment-intents/direct-charge).
+
+## Every integration, the same rules
+
+- **Minimum amount** is 10 GMD.
+- **Confirm payments on your server.** Use the [webhook](/documentation/core/webhooks) or [verify the payment](/documentation/payment-intents/management). Never trust only a redirect or a browser callback.
+- **Keep secret keys on your server.** Browser options use your public key.

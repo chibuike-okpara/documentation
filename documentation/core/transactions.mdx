@@ -1,118 +1,75 @@
 ---
-title: Transactions
+title: "Transactions"
+description: "Every payment attempt and its result: who paid, how, how much, and when."
 ---
 
-Transactions provide essential information on individual payment activities, such as successful payments, refunds, failed attempts, and cancelled transactions. Each transaction includes detailed data on the payment's origin, method, customer, and status, making it a powerful tool for tracking and managing financial activity within Modem Pay.
+A transaction is created each time a customer tries to pay. Use transactions to confirm payments, build reports and reconcile with your own records.
 
----
+## The transaction object
 
-### Transaction Attributes
+| Field | What it is |
+| --- | --- |
+| `id` | The transaction's ID. |
+| `payment_intent_id` | The payment intent it belongs to. |
+| `amount`, `currency` | How much was paid. |
+| `status` | `pending`, `completed`, `failed`, `refunded` or `cancelled`. |
+| `type` | What it was for, like `payment` or `invoice`. |
+| `transaction_reference` | A short reference you can give the customer, like `VOAO1CFEN7`. |
+| `payment_method` | How they paid, like `wave` or `qmoney`. |
+| `payment_account` | The masked wallet or card, like `.... 9944`. |
+| `customer`, `customer_name`, `customer_email`, `customer_phone` | Who paid. |
+| `payment_link_id` | The [payment link](/documentation/core/payment-links) used, if any. |
+| `custom_fields_values` | Answers to your checkout questions. |
+| `metadata` | The data you attached when creating the payment. |
+| `test_mode` | `true` for test payments. |
+| `createdAt`, `updatedAt` | When it was created and last changed. |
 
-Every transaction contains the following key attributes:
-
-- **Basic Details**
-  - `id`: Unique identifier for the transaction.
-  - `payment_intent_id`: ID of the associated payment intent.
-  - `amount`: Total transaction amount.
-  - `currency`: Currency in which the transaction was processed.
-  - `status`: Indicates transaction status; options are `pending`, `completed`, `failed`, `refunded`, and `cancelled`.
-  - `type`: Type of transaction, such as `payment`, `subscription`, or `invoice`.
-  - `transaction_reference`: Unique identifier for tracking the transaction.
-
-- **Payment and Customer Information**
-  - `payment_account`: Account used for processing.
-  - `payment_method`: Method used by the customer.
-  - `customer_name`, `customer_phone`, `customer_email`: Basic contact details for the customer.
-  - `account_id`: ID of the account processing the transaction.
-  - `business_id`: Associated business ID for the transaction.
-
-- **Timestamps and Metadata**
-  - `createdAt` and `updatedAt`: Creation and last update timestamps.
-  - `custom_fields_values`: Additional information collected for the transaction.
-  - `metadata`: Any developer-provided metadata.
-  - **Associated Objects**
-  - `PaymentGateway`: The gateway used for processing.
-  - `Customer`: Associated customer object, if available.
-
----
-
-### Retrieve a Transaction
-
-Use `retrieve` to get the complete details of a specific transaction by its ID. This is useful for checking the outcome, reviewing customer details, or troubleshooting any issues tied to a specific transaction.
+## Get a transaction
 
 <CodeGroup>
 ```javascript nodejs
-const transaction = await modempay.transactions.retrieve(
-    "5a24d5d0-1117-4f18-9a44-78112eac8aa1"
-);
+const transaction = await modempay.transactions.retrieve("5a24d5d0-1117-4f18-9a44-78112eac8aa1");
 ```
 ```python python
-modem_pay.transactions.retrieve("5a24d5d0-1117-4f18-9a44-78112eac8aa1")
+transaction = modem_pay.transactions.retrieve("5a24d5d0-1117-4f18-9a44-78112eac8aa1")
 ```
-```bash curl
-curl -X GET "https://api.modempay.com/v1/transactions/5a24d5d0..." \
-  -H "Authorization: Bearer <your_api_key>" \
-  -H "Content-Type: application/json"
+```bash cURL
+curl https://api.modempay.com/v1/transactions/5a24d5d0-1117-4f18-9a44-78112eac8aa1 \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-### List All Transactions
+<Tip>
+  This is how you confirm a payment on your server. Check that `status` is `completed` and that `amount` matches your order before you deliver.
+</Tip>
 
-The `list` function returns all transactions, helping you monitor overall payment activity. This method is ideal for generating reports, reconciling payments, and tracking transaction volume over a given period.
+## List transactions
 
 <CodeGroup>
 ```javascript nodejs
-const transactions = await modempay.transactions.list();
-```
-```python python
-transactions = modem_pay.transactions.list()
-```
-```bash curl
-curl -X GET "https://api.modempay.com/v1/transactions" \
-  -H "Authorization: Bearer <your_api_key>" \
-  -H "Content-Type: application/json"
-```
-</CodeGroup>
-
-Additional pagination options let you control the number of transactions returned and navigate larger datasets.
-
-### List All Transactions with Filtering Options
-
-This flexibility is especially useful for generating tailored reports, narrowing down search results, or reviewing specific timeframes.
-
-#### List Options
-
-The `TransactionListOption` allows the following filtering and pagination options:
-
-- `limit` (optional): Specifies the maximum number of transactions to return in a single call, enabling pagination of results.
-- `search` (optional): A search term that filters results based on:
-  - **Currency**: Matches transactions processed in the specified currency.
-  - **Reference**: Filters by transaction reference for easy tracking.
-  - **Payment Method**: Filters by the payment method used, such as credit card or bank transfer.
-  - **Customer**: Filters based on customer details.
-- `timeframe` (optional): Defines a duration in minutes to limit transactions to those created within the specified timeframe. This is helpful for retrieving recent activity or analyzing transactions over short intervals.
-
-#### Example Usage
-
-<CodeGroup>
-```javascript node
 const transactions = await modempay.transactions.list({
   limit: 20,
-  search: "GMD",
-  timeframe: 1440 // last 24 hours
+  search: "wave",
+  timeframe: 1440, // last 24 hours
 });
 ```
 ```python python
 transactions = modem_pay.transactions.list(
-    options={"limit": 20, "search": "GMD", "timeframe": 1440}
+    options={"limit": 20, "search": "wave", "timeframe": 1440}
 )
 ```
-```bash curl
-curl -X GET "https://api.modempay.com/v1/transactions?limit=20&search=GMD&timeframe=1440" \
-  -H "Authorization: Bearer <your_api_key>" \
-  -H "Content-Type: application/json"
+```bash cURL
+curl "https://api.modempay.com/v1/transactions?limit=20&search=wave&timeframe=1440" \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-This example would retrieve up to 20 transactions processed in GMD over the past 24 hours.
+| Option | What it does |
+| --- | --- |
+| `limit` | How many to return at once. |
+| `search` | Match by currency, reference, payment method or customer. |
+| `timeframe` | Only transactions from the last this-many **minutes**. `1440` is one day. |
 
+A restricted key needs the `transactions:read` permission.
+
+To refund a transaction, see [Refunds](/documentation/payment-intents/refund).

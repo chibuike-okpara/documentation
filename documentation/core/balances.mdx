@@ -1,73 +1,53 @@
 ---
-title: Balances
+title: "Balances"
+description: "Where your money is, and when you can spend it."
 ---
 
-Modem Pay provides a clear and robust balance system to help you manage your business funds efficiently. There are two primary types of balances you will encounter:
+Each account has two balances:
 
-### 1. `available_balance`
+| Balance | What it holds | Can you spend it? |
+| --- | --- | --- |
+| `available_balance` | Money from customer payments that is **waiting to settle**. | Not yet. |
+| `payout_balance` | Settled money: your Modem Pay wallet. | Yes. Payouts, refunds and withdrawals come from here. |
 
-This is the amount of money your business has earned from successful transactions (such as payments from your customers) that is currently held by Modem Pay. The `available_balance` represents funds that are **pending settlement**, they are not yet in your payout wallet or your bank account. Typically, these funds are subject to a settlement period, after which they can be moved to your payout balance or settled directly to your bank account.
+```mermaid
+flowchart LR
+    A[Customer pays] --> B[available_balance]
+    B -- settlement --> C[payout_balance]
+    C --> D[Payouts]
+    C --> E[Refunds]
+    C --> F[Your bank or wallet]
+```
 
-- **How it works:**  
-  When a customer makes a successful payment, the funds are first credited to your `available_balance`. These funds remain here until they are eligible for settlement according to the settlement schedule.
-
-### 2. `payout_balance`
-
-Think of your `payout_balance` as your **Modem Pay wallet**. Once funds are settled from your `available_balance`, they are moved into your `payout_balance`. This balance is immediately usable for various business operations within Modem Pay.
-
-- **What you can do with payout_balance:**
-  - **Transfers:** Initiate payouts to vendors, suppliers, or other recipients.
-  - **Refunds:** Issue refunds to your customers.
-  - **Other operations:** Any other Modem Pay features that require available funds.
-
-### Checking Your Balance
+## Check your balance
 
 <CodeGroup>
-```typescript nodejs
-import ModemPay from "modem-pay";
-
-const modempay = new ModemPay("sk_live_bc...");
-
+```javascript nodejs
 const balance = await modempay.balances.retrieve();
-
-// {'payout_balance': 10, 'available_balance': 0}
+// { payout_balance: 10, available_balance: 0 }
 ```
 ```python python
-from modempay import ModemPay
-
-modempay = ModemPay(api_key="")
-
-balance = modempay.balances.retrieve()
-
+balance = modem_pay.balances.retrieve()
 # {'payout_balance': 10, 'available_balance': 0}
 ```
 ```bash cURL
-curl -X GET "https://api.modempay.com/v1/balances" \
-  -H "Authorization: Bearer <your_api_key>" 
-
-# {'payout_balance': 10, 'available_balance': 0}
-
+curl https://api.modempay.com/v1/balances \
+  -H "Authorization: Bearer sk_test_..."
 ```
 </CodeGroup>
 
-### Balance Flow Example
+A restricted key needs the `balance:read` permission.
 
-1. **Customer Payment:**  
-   - A customer pays for your service or product.
-   - The payment is successful.
-   - The amount is credited to your `available_balance`.
+## Things that change your payout balance
 
-2. **Settlement:**  
-   - After the settlement period, Modem Pay moves the eligible funds from your `available_balance` to your `payout_balance`.
+| Goes down | Goes up |
+| --- | --- |
+| A payout, plus its fee | Settlement of your available balance |
+| A refund to a customer | A failed or cancelled payout (refunded in full) |
+| | A reversed payout, including its fee |
 
-3. **Usage:**  
-   - You can now use your `payout_balance` to make transfers, process refunds, or withdraw to your bank account.
+<Tip>
+  Before a big [bulk payout](/documentation/payouts/bulk-payout), check `payout_balance` covers the total **plus fees**. If it doesn't, the whole batch is refused.
+</Tip>
 
-> **Note:**  
-> Your `available_balance` is not directly spendable. Only after funds are moved to your `payout_balance` do they become available for operational use.
-
----
-
-**In summary:**  
-- `available_balance` = Funds from successful transactions, pending settlement.  
-- `payout_balance` = Your Modem Pay wallet, ready for transfers, refunds, and more.
+Each account, and each mode (test or live), has its own balances.

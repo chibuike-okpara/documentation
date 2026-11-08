@@ -1,0 +1,138 @@
+---
+title: "Modem Pay CLI"
+description: "Get test webhooks on your laptop, send sample events and create test payments, all from your terminal."
+---
+
+The CLI is the fastest way to build and test your webhook handler. It only works in **test mode**, so it can never touch real money.
+
+## Install
+
+You need Node.js 18 or later.
+
+```bash
+npm install -g modem-pay-cli
+modempay --version
+```
+
+## Log in
+
+```bash
+modempay login
+```
+
+Your browser opens on the Modem Pay dashboard with a short code. Check it matches the code in your terminal, choose the account to test with, and click **Approve**.
+
+```text
+Your code: KQ7M-4XPD
+
+Opening https://merchant.modempay.com/cli/authorize?code=KQ7M-4XPD
+Check the code matches, pick an account and click Approve. Waiting… (Ctrl+C to cancel)
+
+✔ Logged in to Main account.
+  Saved to ~/.modempay-cli-config.json (readable only by you). The session lasts 30 days.
+```
+
+- Works however you sign in to the dashboard: Google, password or two-factor. You never type a password into the terminal.
+- On a server with no browser, run `modempay login --no-browser` and open the link on any device.
+- The login lasts **30 days**. It's saved in `~/.modempay-cli-config.json`, which only your user can read.
+
+<Note>
+  **What the CLI can do with your account.** When you approve, the CLI gets its own **test-mode** API key that can only create and read payments, and expires after 30 days. Logging in again replaces it. The CLI's session can only manage test webhooks. It can't see live data, send payouts or change settings.
+</Note>
+
+<Warning>
+  Only approve a code you started yourself, just now, in your own terminal. Never approve a code someone sent you. If the dashboard warns that the request came from a different network, click **Deny** unless you know why.
+</Warning>
+
+```bash
+modempay status    # who you're logged in as, and which account
+modempay logout    # remove the saved login
+```
+
+## Switch accounts
+
+If your business has more than one account (for example a GMD and a USD account), choose which one to test with:
+
+```bash
+modempay accounts           # list them; ● marks the one in use
+modempay use "Shop USD"     # switch (you'll approve again in the browser)
+```
+
+Team members limited to one account always get that account.
+
+## Receive webhooks on your machine
+
+```bash
+modempay listen --forward-url http://localhost:3000/webhook
+```
+
+The CLI opens a public URL and forwards every test-mode webhook to your local server. The body and the `x-modem-signature` header arrive **unchanged**, so your signature check works exactly as it will in production.
+
+```text
+Ready. Forwarding test-mode webhooks for Main account:
+  https://….modempay.com  →  http://localhost:3000/webhook
+
+  Note: this replaces your account's test-mode webhook URL and secret while it runs.
+  Signing secret: a1b2c3…3f9a (use --print-secret to show it in full)
+
+12:04:31 → charge.succeeded  200  84ms
+12:05:40 → charge.failed  500  31ms
+```
+
+Use the signing secret the CLI shows to verify events while `listen` is running.
+
+| Option | |
+| --- | --- |
+| `-f, --forward-url <url>` | Your local webhook endpoint. Required. |
+| `-p, --port <port>` | Local port for the CLI's receiver. Default `9292`. |
+| `--print-secret` | Show the full signing secret. |
+
+<Warning>
+  While `listen` runs, your account's **test** webhook URL and signing secret are replaced by the CLI's. When you stop, set your test webhook back in the dashboard if you use one. Your **live** webhook is never touched.
+</Warning>
+
+## Send sample events
+
+```bash
+modempay events                    # list what you can trigger
+modempay trigger charge.succeeded
+```
+
+Events go to your current test webhook: the CLI's while `listen` runs, or your dashboard one.
+
+You can trigger: `charge.created`, `charge.succeeded`, `charge.failed`, `charge.cancelled`, `payment_intent.created`, `payment_intent.cancelled`, `customer.created`, `customer.updated` and `customer.deleted`.
+
+## Create test payments
+
+```bash
+modempay transaction init --amount 100 --email customer@example.com
+modempay transaction verify --id <payment_intent_id>
+```
+
+`init` prints a checkout link you can open and pay in test mode. Add `--json` to either command to see the raw API response.
+
+## A typical session
+
+```bash
+# terminal 1: your app
+npm run dev
+
+# terminal 2: forward webhooks to it
+modempay listen --forward-url http://localhost:3000/webhook
+
+# terminal 3: make things happen
+modempay trigger charge.succeeded
+modempay transaction init --amount 250
+```
+
+## Settings
+
+| Environment variable | |
+| --- | --- |
+| `MODEMPAY_CLI_CONFIG` | Use a different file for the saved login. |
+| `NO_COLOR` | Turn off colours. |
+| `DEBUG` | Show full error details. |
+
+<Tip>
+  Something not working? Run `modempay status` first. If it says your login expired, run `modempay login` again.
+</Tip>

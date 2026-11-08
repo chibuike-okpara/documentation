@@ -1,53 +1,85 @@
 ---
-title: Payment Intents
+title: "Payment intents"
+sidebarTitle: "Overview"
+description: "The object behind every payment: create one on your server, send the customer to pay, then confirm the result."
 ---
 
-A **Payment Intent** is Modem Pay's way of capturing that a customer wants to
-pay a certain amount. You use it to kick off a payment and get a link your
-customer can use to pay securely.
+A **payment intent** says "this customer should pay this amount". You create it on your server, Modem Pay gives you a `payment_link`, and the customer pays there. Every integration, from the pay button to payment links, creates one behind the scenes.
 
-### The Payment Intent object
+```mermaid
+flowchart LR
+    A[requires_payment_method] --> B[processing]
+    B --> C[successful]
+    B --> D[failed]
+    A --> E[cancelled]
+    A --> F[expired]
+    F -- restored --> A
+```
 
-Here's everything you can include when you create one:
+## What you can send
 
-- **amount**: The total amount to be paid.
-- **currency**: The currency of the payment (optional).
-- **payment_methods**: A list of payment methods you'll accept (optional), e.g. "card", "bank", "wallet".
-- **title**: A title for the payment (optional).
-- **description**: A description of the payment (optional).
-- **customer**: The ID of the customer paying (optional).
-- **customer_name**: The customer's name (optional).
-- **customer_email**: The customer's email address (optional).
-- **customer_phone**: The customer's phone number (optional).
-- **metadata**: Any extra information you want to attach to the payment (optional).
-- **return_url**: Where the customer is sent after they pay successfully (optional).
-- **cancel_url**: Where the customer is sent if they cancel (optional).
-- **payment_method**: A specific payment method to use (optional).
-- **coupon**: The ID of a coupon to apply (optional). If you include one, its discount is taken off the payment amount.
-- **callback_url**: The web address where Modem Pay sends you a notification once the payment has been handled.
-- **skip_url_validation**: Set this to `true` to skip Modem Pay's usual checking of your `cancel_url` or `return_url`. You'll mostly need this when those links are mobile app deeplinks, so customers land back inside your app.
+Only `amount` is required.
 
-#### What you get back
+| Field | What it does |
+| --- | --- |
+| `amount` | How much to charge, in GMD. At least 10. |
+| `currency` | Defaults to your account's currency. |
+| `title`, `description` | Shown to the customer at checkout. |
+| `customer` | A [customer](/documentation/core/customers) ID. Their saved payment methods are offered. |
+| `customer_name`, `customer_email`, `customer_phone` | Fill in checkout for a customer you haven't saved. |
+| `payment_methods` | Limit the choice, like `["wallet"]` or `["card"]`. |
+| `payment_method` | Charge one specific saved payment method. |
+| `network`, `account_number` | [Direct charge](/documentation/payment-intents/direct-charge) a mobile wallet. |
+| `coupon` | A [coupon](/documentation/core/coupons) ID or name. Its discount is taken off. |
+| `sub_account`, `sub_account_group` | [Split the payment](/documentation/split-payments/initialize-payment) with partners. |
+| `metadata` | Your own data, like an order ID. Comes back on the transaction and every webhook. |
+| `return_url` | Where the customer goes after paying. |
+| `cancel_url` | Where the customer goes if they cancel. |
+| `callback_url` | Send this payment's events here instead of your webhook. See [Callback URL](/documentation/payment-intents/callback_url). |
+| `skip_url_validation` | Set `true` when `return_url` or `cancel_url` is a mobile app deep link, like `myapp://paid`. |
 
-After you create a Payment Intent, here's what comes back:
+## What you get back
 
-- **status**: True or false — whether the Payment Intent was created successfully. `true` means it worked, `false` means it didn't.
-- **message**: A short, readable note about how it went (e.g. "Payment intent created successfully. Please proceed to complete the payment.").
-- **data**: An object holding the details of the Payment Intent. Inside it:
-  - **intent_secret**: A secret key that protects the Payment Intent, needed to complete the payment.
-  - **payment_link**: The link to the hosted payment page where your customer pays.
-  - **amount**: The total amount to be paid, in the currency you set.
-  - **currency**: The currency code (e.g. `GMD` for Gambian Dalasi) the payment is made in.
-  - **expires_at**: A timestamp (ISO 8601 format) for when the Payment Intent expires. After this time, it's no longer valid.
-  - **status**: Where the Payment Intent currently stands. It can be one of:
-    - `requires_payment_method`: A payment method is needed before going further.
-    - `processing`: The payment is being handled right now.
-    - `successful`: The payment went through.
-    - `failed`: The payment didn't go through.
-    - `cancelled`: The payment was called off, either by the customer or the system.
+```json
+{
+  "status": true,
+  "message": "Payment intent created successfully. Please proceed to complete the payment.",
+  "data": {
+    "intent_secret": "bfa7eb3ea516ee15f80915a922c00242…",
+    "payment_link": "https://test.checkout.modempay.com/…",
+    "amount": 450,
+    "currency": "GMD",
+    "status": "requires_payment_method",
+    "expires_at": "2025-03-01T12:30:00.000Z"
+  }
+}
+```
 
-### In short
+| Field | What it is |
+| --- | --- |
+| `payment_link` | Send the customer here to pay. |
+| `intent_secret` | Use it to [look the intent up](/documentation/payment-intents/management#check-a-payment) later. Keep it on your server. |
+| `expires_at` | After this, the link stops working and you get `payment_intent.expired`. |
+| `status` | Where the payment stands. See below. |
 
-Payment Intents are how you start and keep track of a payment in Modem Pay. By
-keeping all the inputs and responses neatly organized, they let you control how
-and when payments happen while keeping things smooth for your customers.
+## Statuses
+
+| Status | Meaning |
+| --- | --- |
+| `requires_payment_method` | Waiting for the customer to pay. |
+| `processing` | The customer is paying right now. |
+| `successful` | Paid. |
+| `failed` | The payment didn't go through. |
+| `cancelled` | You or the customer cancelled it. |
+| `expired` | It wasn't paid in time. |
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Create a payment intent" icon="plus" href="/documentation/payment-intents/create">
+    Examples from simple to saved customers.
+  </Card>
+  <Card title="Check, list and cancel" icon="magnifying-glass" href="/documentation/payment-intents/management">
+    Confirm a payment and clean up old ones.
+  </Card>
+</CardGroup>

@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
-  "name": "Modem Pay Inc.",
+  "name": "Modem Pay",
   "analytics": {
     "gtm": {
       "tagId": "GTM-MG9SRBZJ"
@@ -16,33 +16,79 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Guides",
         "groups": [
           {
-            "group": "Start Here",
-            "expanded": true,
+            "group": "Start here",
             "pages": [
+              "documentation/introduction",
               "documentation/quickstart",
               "documentation/installation",
-              "documentation/authentication",
+              "documentation/authentication"
+            ]
+          },
+          {
+            "group": "Build and test",
+            "pages": [
+              "documentation/cli",
+              "documentation/test-mode",
               "documentation/errors"
             ]
           },
           {
-            "group": "Collections",
-            "expanded": false,
+            "group": "Get paid",
             "pages": [
-              "documentation/payment-intents/overview",
-              "documentation/payment-intents/create",
-              "documentation/payment-intents/direct-charge",
-              "documentation/payment-intents/callback_url",
-              "documentation/payment-intents/refund",
-              "documentation/payment-intents/management"
+              "documentation/payments/overview",
+              "documentation/core/payment-links",
+              "documentation/payments/drop-in",
+              "documentation/payments/modem-inline",
+              "documentation/payments/html-checkout",
+              "documentation/payments/custom"
             ]
           },
           {
-            "group": "Split Payments",
-            "expanded": false,
+            "group": "Payments API",
+            "pages": [
+              "documentation/payment-intents/overview",
+              "documentation/payment-intents/create",
+              "documentation/payment-intents/management",
+              "documentation/payment-intents/direct-charge",
+              "documentation/payment-intents/refund",
+              "documentation/payment-intents/callback_url"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": ["documentation/core/webhooks"]
+          },
+          {
+            "group": "Pay people",
+            "pages": [
+              "documentation/payouts/overview",
+              "documentation/payouts/mobile-money",
+              "documentation/payouts/bulk-payout",
+              "documentation/payouts/fees",
+              "documentation/payouts/payout-channels",
+              "documentation/payouts/reversals"
+            ]
+          },
+          {
+            "group": "Balances and reports",
+            "pages": [
+              "documentation/core/balances",
+              "documentation/core/transactions"
+            ]
+          },
+          {
+            "group": "Customers and discounts",
+            "pages": [
+              "documentation/core/customers",
+              "documentation/core/mandates",
+              "documentation/core/coupons"
+            ]
+          },
+          {
+            "group": "Split payments",
             "pages": [
               "documentation/split-payments/overview",
               "documentation/split-payments/sub-accounts",
@@ -51,14 +97,8 @@
             ]
           },
           {
-            "group": "Payouts",
-            "expanded": false,
-            "pages": [
-              "documentation/payouts/overview",
-              "documentation/payouts/mobile-money",
-              "documentation/payouts/fees",
-              "documentation/payouts/bulk-payout"
-            ]
+            "group": "Accept in person",
+            "pages": ["documentation/virtual-terminal"]
           },
           {
             "group": "Stablecoins",
@@ -69,35 +109,6 @@
               "documentation/stablecoins/price-estimates",
               "documentation/stablecoins/resellers"
             ]
-          },
-          {
-            "group": "Drop-ins",
-            "pages": [
-              "documentation/payments/overview",
-              "documentation/payments/drop-in",
-              "documentation/payments/modem-inline",
-              "documentation/payments/html-checkout",
-              "documentation/payments/custom"
-            ]
-          },
-          {
-            "group": "Core API Resources",
-            "expanded": false,
-            "pages": [
-              "documentation/core/balances",
-              "documentation/core/customers",
-              "documentation/core/mandates",
-              "documentation/core/payment-links",
-              "documentation/core/transactions",
-              "documentation/core/webhooks",
-              "documentation/core/webhook-cli",
-              "documentation/core/coupons"
-            ]
-          },
-          {
-            "group": "Terminals",
-            "expanded": false,
-            "pages": ["documentation/virtual-terminal"]
           }
         ]
       },
@@ -105,10 +116,22 @@
         "tab": "API Reference",
         "openapi": "openapi.json",
         "groups": [
-          { "group": "Payment Intents", "pages": ["POST /v1/payments"] },
-          { "group": "Payment Links", "pages": ["POST /v1/payment-links"] },
-          { "group": "Transfers", "pages": ["POST /v1/transfers"] },
-          { "group": "Customers", "pages": ["POST /v1/customers"] },
+          {
+            "group": "Payments",
+            "pages": ["POST /v1/payments"]
+          },
+          {
+            "group": "Payment links",
+            "pages": ["POST /v1/payment-links"]
+          },
+          {
+            "group": "Payouts",
+            "pages": ["POST /v1/transfers"]
+          },
+          {
+            "group": "Customers",
+            "pages": ["POST /v1/customers"]
+          },
           {
             "group": "Transactions",
             "pages": ["GET /v1/transactions/{transaction_id}"]
@@ -116,7 +139,7 @@
         ]
       },
       {
-        "tab": "Billing",
+        "tab": "Invoices",
         "groups": [
           {
             "group": "Invoices",
@@ -131,7 +154,7 @@
         ]
       },
       {
-        "tab": "Laravel Integration",
+        "tab": "Plugins and frameworks",
         "groups": [
           {
             "group": "Laravel",
@@ -141,14 +164,9 @@
               "laravel/usage",
               "laravel/webhooks"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Plugins",
-        "groups": [
+          },
           {
-            "group": "Plugins",
+            "group": "WordPress",
             "pages": ["plugins/woocommerce", "plugins/payment-form"]
           }
         ]
@@ -183,6 +201,10 @@
   "navbar": {
     "links": [
       {
+        "label": "CLI",
+        "href": "https://docs.modempay.com/documentation/cli"
+      },
+      {
         "label": "Support",
         "href": "mailto:info@modempay.com"
       }
@@ -213,6 +235,47 @@
     {
       "source": "/documentation/defi/accept-stablecoin-payments",
       "destination": "/documentation/stablecoins/accept-payments"
+    },
+    {
+      "source": "/documentation/sessions/sessions",
+      "destination": "/documentation/payment-intents/create"
+    },
+    {
+      "source": "/documentation/sessions/manage-sessions",
+      "destination": "/documentation/payment-intents/management"
+    },
+    {
+      "source": "/documentation/development",
+      "destination": "/documentation/quickstart"
+    },
+    {
+      "source": "/integrations/introduction",
+      "destination": "/documentation/introduction"
+    },
+    {
+      "source": "/api-reference/introduction",
+      "destination": "/documentation/introduction"
+    },
+    {
+      "source": "/api-reference/endpoint/:slug*",
+      "destination": "/documentation/introduction"
+    },
+    {
+      "source": "/ai-tools/:slug*",
+      "destination": "/documentation/introduction"
+    },
+    {
+      "source": "/payments/overview",
+      "destination": "/documentation/payments/overview"
+    },
+    {
+      "source": "/documentation/api-keys",
+      "destination": "/documentation/authentication"
+    },
+    {
+      "source": "/documentation/core/webhook-cli",
+      "destination": "/documentation/cli"
     }
-  ]
+  ],
+  "description": "Accept mobile money and card payments, send payouts, split revenue and settle stablecoins in The Gambia."
 }

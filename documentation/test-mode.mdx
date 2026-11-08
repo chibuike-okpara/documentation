@@ -1,0 +1,79 @@
+---
+title: "Test mode and going live"
+sidebarTitle: "Test mode and going live"
+description: "Build without moving real money, then switch on live payments with confidence."
+---
+
+Every Modem Pay account has two separate worlds: **test** and **live**. You build and try everything in test mode. When it works, you switch your keys and go live. Your code doesn't change.
+
+## What's different in test mode
+
+| | Test mode | Live mode |
+| --- | --- | --- |
+| Keys | `sk_test_…`, `pk_test_…` | `sk_live_…`, `pk_live_…` |
+| Money | Nothing real moves | Real payments and payouts |
+| Data | Test payments, customers, links, sub-accounts, webhooks | Live ones, completely separate |
+| Webhooks | Your test webhook URL | Your live webhook URL |
+| Needs KYC | No | Yes |
+
+The mode comes from the key. A test key only ever sees test data. A live key only ever sees live data. If you get a `404` for something you know exists, check you're using a key from the same mode.
+
+Use the **Test mode** switch in the dashboard to see your test data.
+
+## Try your integration
+
+<Steps>
+  <Step title="Take a test payment">
+    Follow the [Quickstart](/documentation/quickstart), or from your terminal:
+
+    ```bash
+    npm install -g modem-pay-cli
+    modempay login
+    modempay transaction init --amount 100
+    ```
+  </Step>
+  <Step title="Receive webhooks on your machine">
+    ```bash
+    modempay listen --forward-url http://localhost:3000/webhook
+    ```
+    Every test event is forwarded to your local server, signed exactly as in production. See [Modem Pay CLI](/documentation/cli).
+  </Step>
+  <Step title="Test the unhappy paths">
+    Cancel a payment, close the checkout, send a webhook your server rejects. Your system should handle each one.
+
+    ```bash
+    modempay trigger charge.failed
+    modempay trigger charge.cancelled
+    ```
+  </Step>
+</Steps>
+
+## Go-live checklist
+
+<AccordionGroup>
+  <Accordion title="1. Get verified (KYC)" icon="id-card">
+    Submit your business documents in the dashboard. You can't take live payments until they're approved. The dashboard shows exactly which documents are still missing.
+  </Accordion>
+  <Accordion title="2. Create live keys the safe way" icon="key">
+    Create a **restricted** live key for each system, with only the permissions it needs. Add IP allowlists for your servers, and payout limits on any key that can send money. See [API keys](/documentation/authentication).
+  </Accordion>
+  <Accordion title="3. Store keys as secrets" icon="lock">
+    Put live keys in environment variables or a secrets manager. Never in your code, your website or your mobile app.
+  </Accordion>
+  <Accordion title="4. Add your live webhook" icon="bell">
+    Add your live webhook URL in the dashboard and store its signing secret. Live and test webhooks have different secrets. Check that your endpoint [verifies signatures](/documentation/core/webhooks#verify-the-signature).
+  </Accordion>
+  <Accordion title="5. Mark orders paid from the webhook" icon="circle-check">
+    Don't rely on the customer reaching your `return_url`. People close tabs. Fulfil orders when you receive `charge.succeeded`, or after [verifying the payment](/documentation/payment-intents/management) on your server.
+  </Accordion>
+  <Accordion title="6. Use idempotency keys for payouts" icon="shield">
+    Send a unique `Idempotency-Key` with every payout so a retry can never pay twice.
+  </Accordion>
+  <Accordion title="7. Run one small real payment" icon="flag-checkered">
+    Pay yourself 10 GMD on your live site and check the order, the webhook and your balance.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  Data never moves between modes. Payment links, customers, coupons, sub-accounts and webhooks you made in test mode need to be created again in live mode.
+</Note>

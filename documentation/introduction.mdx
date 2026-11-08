@@ -1,18 +1,120 @@
 ---
-title: Documentation Overview
-description: "Introduction to Modem Pay API Documentation"
+title: "Modem Pay documentation"
+sidebarTitle: "Introduction"
+description: "Accept mobile money and card payments, pay people, split revenue and settle stablecoins in dalasi, all through one API."
 ---
 
-Welcome to the Modem Pay API documentation. This guide is designed to help you navigate and effectively integrate our API into your application, so you can transform payment experiences for your customers across Africa. We’re committed to providing developers with a robust and flexible platform that simplifies payment processing and offers the essential tools for a secure and efficient transaction experience, especially for businesses operating in The Gambia and the broader continent.
+Modem Pay is one API for getting paid and paying people in The Gambia. Your customers pay with **Wave, Afrimoney, QMoney, APS, Yonna or card**. You get one balance, one dashboard and one set of webhooks.
 
-Here’s what you can expect in this documentation:
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/documentation/quickstart">
+    Take your first test payment in about five minutes.
+  </Card>
+  <Card title="Choose an integration" icon="signs-post" href="/documentation/payments/overview">
+    No code, a few lines of HTML, or a full API. Pick what fits.
+  </Card>
+</CardGroup>
 
-- **API References**: Each endpoint is documented with descriptions, request/response formats, and examples. We use REST with JSON responses, so handling data is simple.
+## Get paid
 
-- **Error Handling**: Each endpoint lists possible status codes and error messages to help you manage issues quickly.
+<CardGroup cols={3}>
+  <Card title="Payment links" icon="link" href="/documentation/core/payment-links">
+    Share a link on WhatsApp, SMS or social media. No website needed.
+  </Card>
+  <Card title="Pay button" icon="hand-pointer" href="/documentation/payments/drop-in">
+    One HTML tag adds a payment button to any page.
+  </Card>
+  <Card title="Checkout pop-up" icon="window-restore" href="/documentation/payments/modem-inline">
+    Customers pay without leaving your site.
+  </Card>
+  <Card title="Payment intents" icon="code" href="/documentation/payment-intents/overview">
+    Full control from your server: create, charge, verify, cancel.
+  </Card>
+  <Card title="Direct charge" icon="mobile-screen" href="/documentation/payment-intents/direct-charge">
+    Send the payment request straight to the customer's wallet.
+  </Card>
+  <Card title="Invoices" icon="file-invoice" href="/billing/invoices/introduction">
+    Itemised bills with due dates, reminders and overdue tracking.
+  </Card>
+  <Card title="Virtual terminals" icon="qrcode" href="/documentation/virtual-terminal">
+    A QR code for each counter, with WhatsApp alerts for staff.
+  </Card>
+  <Card title="Stablecoins" icon="coins" href="/documentation/stablecoins/overview">
+    Accept USDT and USDC, or turn them into dalasi.
+  </Card>
+  <Card title="Coupons" icon="ticket" href="/documentation/core/coupons">
+    Percentage or fixed discounts with limits and expiry dates.
+  </Card>
+</CardGroup>
 
-- **Single-Transaction Focus**: Our API is designed for individual requests, not bulk processing, to keep things reliable and secure.
+## Move money
 
-- **Flexible Payment Options**: Our API fits the needs of African businesses with tools to shape the payment experience as you need.
+<CardGroup cols={3}>
+  <Card title="Payouts" icon="paper-plane" href="/documentation/payouts/overview">
+    Send money to Wave and Afrimoney wallets in seconds.
+  </Card>
+  <Card title="Bulk payouts" icon="users" href="/documentation/payouts/bulk-payout">
+    Pay up to 1,000 people with one request.
+  </Card>
+  <Card title="Split payments" icon="arrows-split-up-and-left" href="/documentation/split-payments/overview">
+    Share each payment with partners automatically.
+  </Card>
+  <Card title="Refunds" icon="rotate-left" href="/documentation/payment-intents/refund">
+    Give money back, in full or in part.
+  </Card>
+  <Card title="Payout reversals" icon="arrow-rotate-left" href="/documentation/payouts/reversals">
+    Pull back a Wave payout sent by mistake.
+  </Card>
+  <Card title="Balances" icon="wallet" href="/documentation/core/balances">
+    See what's waiting to settle and what you can spend.
+  </Card>
+</CardGroup>
 
-With Modem Pay, you have a straightforward, efficient payment platform ready to use across Africa.
+## Build safely
+
+<CardGroup cols={3}>
+  <Card title="Restricted API keys" icon="key" href="/documentation/authentication">
+    Give each system only the access it needs, with expiry, IP limits and payout caps.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/documentation/core/webhooks">
+    Signed events for payments, payouts, customers and invoices.
+  </Card>
+  <Card title="Modem Pay CLI" icon="terminal" href="/documentation/cli">
+    Receive test webhooks on your laptop and trigger sample events.
+  </Card>
+</CardGroup>
+
+## How it works
+
+<Steps>
+  <Step title="Build in test mode">
+    Every account starts with test keys (`sk_test_`, `pk_test_`). Nothing you do with them moves real money.
+  </Step>
+  <Step title="Get verified">
+    Submit your business documents (KYC) from the dashboard.
+  </Step>
+  <Step title="Go live">
+    Swap your test keys for live keys (`sk_live_`, `pk_live_`). Your code stays the same.
+  </Step>
+</Steps>
+
+See [Test mode and going live](/documentation/test-mode) for the full checklist.
+
+## Libraries and tools
+
+| | Install |
+| --- | --- |
+| Node.js | `npm install modem-pay` |
+| Python | `pip install modempay` |
+| PHP | `composer require modempay/modempay-php` |
+| Laravel | [Laravel package](/laravel/quickstart) |
+| WordPress | [WooCommerce plugin](/plugins/woocommerce) and [payment form](/plugins/payment-form) |
+| CLI | `npm install -g modem-pay-cli` |
+
+Prefer raw HTTP? Every SDK call is a plain JSON request to `https://api.modempay.com/v1` with your secret key in the `Authorization` header.
+
+<Tip>
+  Using an AI assistant? Point it at [docs.modempay.com/llms.txt](https://docs.modempay.com/llms.txt), or use the menu at the top of any page to copy it or open it in ChatGPT, Claude or Cursor.
+</Tip>
+
+Need help? Email [info@modempay.com](mailto:info@modempay.com).

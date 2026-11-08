@@ -1,5 +1,5 @@
 ---
-title: Quickstart Guide
+title: "Quickstart"
 description: Accept your first payment with Modem Pay in a few minutes.
 ---
 
@@ -12,7 +12,7 @@ This page takes you from sign-up to your first test payment.
 | You need                        | Where to get it                                           |
 | ------------------------------- | --------------------------------------------------------- |
 | A Modem Pay account             | [Sign up on the dashboard](https://merchant.modempay.com) |
-| Your API keys                   | Dashboard, under API keys                                 |
+| Your API keys                   | Dashboard, under **Developers → API keys**                |
 | A URL to send customers back to | Your website or app                                       |
 
 <Note>
@@ -123,6 +123,18 @@ This page takes you from sign-up to your first test payment.
 
 That's it. You've accepted a test payment.
 
+<Tip>
+  **Prefer the terminal?** The [Modem Pay CLI](/documentation/cli) does the same in three commands, and forwards test webhooks to your laptop:
+
+  ```bash
+  npm install -g modem-pay-cli
+  modempay login
+  modempay transaction init --amount 100
+  ```
+
+  Then run `modempay listen --forward-url http://localhost:3000/webhook` to receive webhooks while you build.
+</Tip>
+
 ---
 
 ## Choose how to integrate
@@ -206,6 +218,8 @@ When your test payments work:
   </Step>
 </Steps>
 
+See the full [go-live checklist](/documentation/test-mode#go-live-checklist).
+
 <Note>
   Test and live are kept separate. Payments and sub-accounts created in test
   mode don't exist in live mode, and the reverse.
@@ -225,11 +239,11 @@ When your test payments work:
     React to payments, refunds and transfers on your server.
   </Card>
   <Card
-    title="Transfers"
+    title="Payouts"
     icon="paper-plane"
     href="/documentation/payouts/overview"
   >
-    Send money to mobile wallets and bank accounts.
+    Send money to Wave and Afrimoney wallets.
   </Card>
   <Card
     title="Refunds"

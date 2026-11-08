@@ -1,52 +1,46 @@
 ---
-title: Refunds
+title: "Refunds"
+description: "Give a customer their money back, in full or in part."
 ---
 
-Refunds allow you to reverse a completed payment, either partially or in full, by returning funds to the customer. Common scenarios for refunds include order cancellations, duplicate payments, or fulfillment issues. Modem Pay makes it simple to issue refunds via the API.
+You can refund a completed payment within **48 hours**. The money comes from your [payout balance](/documentation/core/balances) and goes back to the customer.
 
-### Important Refund Policies
+## Rules
 
-- **Eligibility:** Refunds are only allowed on transactions that have a **completed** status.
-- **Refund Window:** The refund request must be made within **48 hours** of the original transaction’s completion.
-- **Partial Refunds:** To issue a partial refund, specify the `amount` in the request body. The partial refund amount **cannot exceed** the original transaction amount.
-- **Charges:** Charges may apply when processing a refund.
-- **Transaction Reference:** Always use the **reference** to identify the payment you want to refund.
+- The transaction must be `completed`, or `partially_refunded` if you've already refunded part of it.
+- The original payment must be no more than **48 hours** old.
+- You can refund part of a payment, and refund again later, until the total refunded reaches the original amount.
+- A processing charge may apply.
 
-### When to Issue a Refund
+## Refund a payment
 
-You might want to issue a refund when:
-
-- The customer cancels their purchase after payment.
-- An incorrect amount was charged.
-- The goods or services could not be provided.
-- You need to comply with a return or cancellation policy.
-
-Refunds can be processed for the full or partial amount of the original payment as long as they meet the above criteria.
-
-## Issuing a Refund
-
-To issue a refund for a specific payment, call the refund endpoint and provide the **reference** of the original transaction. You can also specify the `amount` to refund if you want to perform a partial refund. _If `amount` is omitted, a full refund will be processed._
-
-### Example: Refund via cURL
+Identify the payment by its transaction `id`, `reference` or `transaction_reference`. Leave out `amount` for a full refund.
 
 <CodeGroup>
+```javascript nodejs
+// Full refund
+await modempay.transactions.reverse("VOAO1CFEN7");
 
-```typescript nodejs
-await modempay.transactions.refund("cos-245wvm6588xrp", 450);
-// Optional: omit amount for full refund
+// Partial refund of 450 GMD
+await modempay.transactions.reverse("VOAO1CFEN7", 450);
 ```
 
 ```bash cURL
-cURL -X POST "https://api.modempay.com/v1/transactions/refund" \
-  -H "Authorization: Bearer <your_api_key>" \
+curl -X POST https://api.modempay.com/v1/transactions/refund \
+  -H "Authorization: Bearer sk_test_..." \
   -H "Content-Type: application/json" \
-  -d '{
-    "reference": "cos-245wvm6588xrp",
-    "amount": 450
-  }'
-# Optional: omit amount for full refund
+  -d '{ "reference": "VOAO1CFEN7", "amount": 450 }'
 ```
-
 </CodeGroup>
 
-Refund requests are typically processed immediately, but it may take some time for the funds to settle back to your customer's payment method depending on their bank or card provider. Make sure you communicate clearly with your customers during the refund process. Note that refunds are subject to the conditions above and that processing charges may apply.
+A restricted key needs the `refunds:write` permission. Because refunds move money, give it only to systems that really need it.
+
+## After a refund
+
+- The transaction's status becomes `refunded`, or `partially_refunded` for a partial refund.
+- You get a `charge.refunded` [webhook](/documentation/core/webhooks).
+- The customer usually sees the money quickly, but their provider decides the exact timing. Let them know a refund is on its way.
+
+<Tip>
+  Need to give money back after 48 hours, or to a different number? Send a [payout](/documentation/payouts/mobile-money) instead.
+</Tip>

@@ -1,21 +1,23 @@
 ---
-title: Direct Charge
+title: "Direct charge"
+description: "Charge a mobile wallet directly. The customer just confirms on their phone."
 ---
 
-You can set up a **direct charge** by providing the `network` and the 7-digit `account_number` (no country code). This prefills the customer’s details in checkout, pending their confirmation.
+If you already know the customer's wallet, send the `network` and `account_number` when you create the payment intent. The checkout opens with their wallet already filled in, so they only need to confirm.
 
-Accepted networks:
+This is great for apps where the customer has already given you their number, like a top-up or a delivery app.
 
-- `wave`
-- `afrimoney`
-- `qmoney`
-- `aps`
+| Network | `network` value |
+| --- | --- |
+| Wave | `wave` |
+| Afrimoney | `afrimoney` |
+| QMoney | `qmoney` |
+| APS | `aps` |
 
-Works only with **mobile money**.
+The `account_number` is the 7-digit phone number, **without** the country code.
 
 <CodeGroup>
-
-```typescript nodejs
+```javascript nodejs
 const intent = await modempay.paymentIntents.create({
   amount: 450,
   network: "wave",
@@ -24,31 +26,27 @@ const intent = await modempay.paymentIntents.create({
 ```
 
 ```python python
-payment_intent = modem_pay.payment_intents.create(
-  params={"amount": 450, "network": "wave", "account_number": "7000001"}
+intent = modem_pay.payment_intents.create(
+    params={"amount": 450, "network": "wave", "account_number": "7000001"}
 )
 ```
 
 ```php php
-$payment_intent = $modemPay->paymentIntents()->create([
+$intent = $modemPay->paymentIntents()->create([
     'amount' => 450,
     'network' => 'wave',
     'account_number' => '7000001',
 ]);
 ```
 
-```bash curl
-curl -X POST "https://api.modempay.com/v1/payments" \
+```bash cURL
+curl -X POST https://api.modempay.com/v1/payments \
+  -H "Authorization: Bearer sk_test_..." \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <your_api_key>" \
-  -d '{
-    "data": {
-      "amount": 450,
-      "network": "wave",
-      "account_number": "7000001",
-      "from_sdk": false
-    }
-  }'
+  -d '{ "data": { "amount": 450, "network": "wave", "account_number": "7000001" } }'
 ```
-
 </CodeGroup>
+
+Direct charge works with mobile money only. For cards, send the customer to the `payment_link` as usual.
+
+The customer must still approve the payment. Confirm the result with the `charge.succeeded` [webhook](/documentation/core/webhooks), as with any other payment.
