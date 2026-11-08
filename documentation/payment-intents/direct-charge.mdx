@@ -7,14 +7,14 @@ If you already know the customer's wallet, send the `network` and `account_numbe
 
 This is great for apps where the customer has already given you their number, like a top-up or a delivery app.
 
-| Network | `network` value |
-| --- | --- |
-| Wave | `wave` |
-| Afrimoney | `afrimoney` |
-| QMoney | `qmoney` |
-| APS | `aps` |
+| Network   | `network` value |
+| --------- | --------------- |
+| Wave      | `wave`          |
+| Afrimoney | `afrimoney`     |
+| QMoney    | `qmoney`        |
+| APS       | `aps`           |
 
-The `account_number` is the 7-digit phone number, **without** the country code.
+The `account_number` is the 7-or-9-digit phone number, **without** the country code.
 
 <CodeGroup>
 ```javascript nodejs
@@ -45,6 +45,7 @@ curl -X POST https://api.modempay.com/v1/payments \
   -H "Content-Type: application/json" \
   -d '{ "data": { "amount": 450, "network": "wave", "account_number": "7000001" } }'
 ```
+
 </CodeGroup>
 
 Direct charge works with mobile money only. For cards, send the customer to the `payment_link` as usual.
