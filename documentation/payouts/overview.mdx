@@ -72,6 +72,7 @@ To get the current list for your account, call `GET /v1/transfers/payout-channel
 
 | Status | Meaning |
 | --- | --- |
+| `queued` | Your daily limit was reached, so it waits for the next day. The money is already set aside. See [Daily limits](/documentation/payouts/daily-limits). |
 | `pending` | We're sending it. |
 | `pending_review` | Our fraud checks are holding it. Review it in the dashboard. |
 | `completed` | The money reached the wallet. |
@@ -87,6 +88,8 @@ To get the current list for your account, call `GET /v1/transfers/payout-channel
 | `transfer.failed` | The payout failed. Your balance has been refunded. |
 | `transfer.reversed` | The money came back, either because you reversed it, or because nobody claimed a Wave payout. Your balance has been refunded. |
 | `transfer.flagged` | Our fraud checks are holding the payout for review. |
+| `transfer.queued` | Your daily limit was reached and the payout is waiting for the next day. See [Daily limits](/documentation/payouts/daily-limits). |
+| `transfer.cancelled` | A queued payout was cancelled. Your balance has been refunded. |
 
 ## Protect your balance
 

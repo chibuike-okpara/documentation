@@ -86,6 +86,8 @@ Every webhook has two fields: `event`, the name of what happened, and `payload`,
     | `transfer.failed` | The payout failed. The money is back in your balance. |
     | `transfer.reversed` | The payout came back, for example a Wave payout nobody claimed. The money is back in your balance. |
     | `transfer.flagged` | Our fraud checks stopped the payout for review. See [fraud checks](/documentation/payouts/mobile-money#fraud-checks). |
+    | `transfer.queued` | Your daily limit was reached and the payout is waiting for the next day. See [Daily limits](/documentation/payouts/daily-limits). |
+    | `transfer.cancelled` | A queued payout was cancelled. The money is back in your balance. |
   </Accordion>
   <Accordion title="Customers (customer.*)" icon="user">
     | Event | Sent when |

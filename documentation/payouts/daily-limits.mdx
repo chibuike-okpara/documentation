@@ -1,0 +1,136 @@
+---
+title: "Daily limits and queued payouts"
+sidebarTitle: "Daily limits"
+description: "Check how much you can still send today, and what happens to payouts once the daily limit is reached."
+---
+
+Some accounts have a **daily payout limit**: the most they can send in one day. The day runs from 00:00 to 00:00 GMT. Daily limits apply in live mode only.
+
+When a payout would go over the limit, one of two things happens:
+
+- **By default**, the payout is refused with a `429` and no money moves.
+- **With queueing on**, the payout is accepted and **queued**. It is sent automatically after 00:00 GMT, when the new day's limit starts.
+
+Queueing is off unless you ask for it. To turn it on, email [info@modempay.com](mailto:info@modempay.com).
+
+## Check your limit
+
+`GET /v1/transfers/limits`
+
+```bash cURL
+curl "https://api.modempay.com/v1/transfers/limits" \
+  -H "Authorization: Bearer sk_live_..."
+```
+
+A restricted key needs the `transfers:read` permission.
+
+```json
+{
+  "currency": "GMD",
+  "daily_limit": "50000.00",
+  "used_today": "42000.00",
+  "remaining_today": "8000.00",
+  "resets_at": "2026-11-09T00:00:00.000Z",
+  "source": "business",
+  "queue": {
+    "enabled": true,
+    "count": 2,
+    "total": "15000.00",
+    "oldest_queued_at": "2026-11-08T14:02:11.000Z",
+    "next_run_at": "2026-11-09T00:00:00.000Z"
+  },
+  "applies_in_test_mode": false
+}
+```
+
+| Field | What it is |
+| --- | --- |
+| `daily_limit` | Your daily limit. `null` if you have none. |
+| `used_today` | What you've sent today, including payouts still being sent. |
+| `remaining_today` | What you can still send today. |
+| `resets_at` | When the next day starts (00:00 GMT). |
+| `source` | `account` if the limit is set on this account, `business` if it's shared by the whole business. |
+| `queue.enabled` | Whether payouts over the limit are queued instead of refused. |
+| `queue.count`, `queue.total` | How many payouts are waiting, and their total amount. |
+
+### Limit headers
+
+Live payout responses also carry these headers, so you don't need a separate call:
+
+| Header | Value |
+| --- | --- |
+| `X-Daily-Limit` | Your daily limit. |
+| `X-Daily-Limit-Remaining` | What you can still send today, after this payout. |
+| `X-Daily-Limit-Reset` | When the limit resets. |
+| `X-Daily-Limit-Currency` | The currency of the limit. |
+
+## When the limit is reached
+
+### Queueing off
+
+You get a `429` with the code `DAILY_LIMIT_EXCEEDED`. Nothing is taken from your balance. Try again after `resets_at`.
+
+```json
+{
+  "status": "error",
+  "code": "DAILY_LIMIT_EXCEEDED",
+  "message": "Daily payout limit reached. You can send up to 8000.00 GMD more today (limit 50000.00 GMD). The limit resets at 00:00 GMT.",
+  "used_today": "42000.00",
+  "remaining_today": "8000.00",
+  "resets_at": "2026-11-09T00:00:00.000Z"
+}
+```
+
+### Queueing on
+
+You get a `202` and the payout comes back with the status `queued`:
+
+```json
+{
+  "id": "5c1d…",
+  "status": "queued",
+  "amount": 10000,
+  "fee": 100,
+  "queued_at": "2026-11-08T16:40:03.000Z",
+  "scheduled_for": "2026-11-09T00:00:00.000Z"
+}
+```
+
+- **The money is set aside now.** The amount and fee leave your payout balance when the payout is queued, so you can't spend it twice. Only the sending waits.
+- **First in, first out.** Queued payouts are sent oldest first. A new payout joins the back of the line, even if today's limit has room for it.
+- **They count against the new day.** Payouts sent from the queue use the new day's limit. If the queue is bigger than one day's limit, what doesn't fit waits for the next day.
+- **They go out shortly after 00:00 GMT.** Expect them within a few minutes of midnight. Each one then ends with `transfer.succeeded` or `transfer.failed`, like any payout.
+
+A payout larger than your whole daily limit can never fit in a day, so it is always refused with `429`, never queued.
+
+<Note>
+  A queued payout can still fail when it's sent, for example if your daily limit was lowered below its amount. The amount and fee go back to your balance and you get `transfer.failed`.
+</Note>
+
+## Cancel a queued payout
+
+`POST /v1/transfers/{id}/cancel`
+
+```bash cURL
+curl -X POST "https://api.modempay.com/v1/transfers/5c1d…/cancel" \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "reason": "Customer changed their mind" }'
+```
+
+`reason` is optional. A restricted key needs the `transfers:write` permission.
+
+The amount and fee go back to your payout balance, the payout's status becomes `cancelled`, and you get a `transfer.cancelled` webhook. You can also cancel from the payout's page in the dashboard.
+
+Only queued payouts can be cancelled. If the payout is already being sent, you get a `409`.
+
+## Webhooks
+
+| Event | Sent when |
+| --- | --- |
+| `transfer.queued` | The payout was accepted and is waiting for the next day's limit. |
+| `transfer.cancelled` | A queued payout was cancelled. The money is back in your balance. |
+| `transfer.succeeded` | The payout was sent from the queue and reached the wallet. |
+| `transfer.failed` | The payout failed when it was sent. The money is back in your balance. |
+
+If you only act on `transfer.succeeded` and `transfer.failed`, queued payouts work with no changes on your side. Treat a `202` as "accepted", not "sent".

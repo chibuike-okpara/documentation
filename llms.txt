@@ -45,6 +45,7 @@
 - [Send a mobile money payout](https://docs.modempay.com/documentation/payouts/mobile-money): Send money from your balance to a Wave or Afrimoney wallet.
 - [Bulk payouts](https://docs.modempay.com/documentation/payouts/bulk-payout)
 - [Payout fees](https://docs.modempay.com/documentation/payouts/fees): See exactly what a payout will cost before you send it.
+- [Daily limits and queued payouts](https://docs.modempay.com/documentation/payouts/daily-limits): Check how much you can still send today, and what happens to payouts once the daily limit is reached.
 - [Reverse a payout](https://docs.modempay.com/documentation/payouts/reversals): Pull back a Wave payout sent by mistake, within 3 days.
 
 ## Split payments

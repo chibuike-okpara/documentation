@@ -47,6 +47,7 @@ When a request fails, Modem Pay returns an HTTP status of 400 or higher and a JS
 | `route_not_permitted` | 403 | Restricted keys can't call this endpoint. |
 | `per_transfer_limit_exceeded` | 403 | A payout is above the key's per-payout limit. |
 | `daily_transfer_limit_exceeded` | 403 | The payout would take the key over its daily limit. |
+| `DAILY_LIMIT_EXCEEDED` | 429 | The payout would go over the account's daily limit. See [Daily limits](/documentation/payouts/daily-limits). |
 | `RATE_LIMIT` | 429 | Too many payout requests in a short time. |
 | `VELOCITY_LIMIT` | 429 | The account has sent too much value in the current window. |
 | `CONCURRENCY_LIMIT` | 429 | Too many payouts are already being processed. |

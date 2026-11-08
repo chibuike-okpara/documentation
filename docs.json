@@ -19,24 +19,24 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Start here",
+            "group": "Get started",
             "pages": [
               "documentation/introduction",
               "documentation/quickstart",
               "documentation/installation",
-              "documentation/authentication"
-            ]
-          },
-          {
-            "group": "Build and test",
-            "pages": [
-              "documentation/cli",
+              "documentation/authentication",
               "documentation/test-mode",
               "documentation/errors"
             ]
           },
           {
-            "group": "Get paid",
+            "group": "Developer tools",
+            "pages": [
+              "documentation/cli"
+            ]
+          },
+          {
+            "group": "Accept payments",
             "pages": [
               "documentation/payments/overview",
               "documentation/core/payment-links",
@@ -47,36 +47,14 @@
             ]
           },
           {
-            "group": "Payments API",
+            "group": "Payment intents",
             "pages": [
               "documentation/payment-intents/overview",
               "documentation/payment-intents/create",
-              "documentation/payment-intents/management",
               "documentation/payment-intents/direct-charge",
-              "documentation/payment-intents/refund",
-              "documentation/payment-intents/callback_url"
-            ]
-          },
-          {
-            "group": "Webhooks",
-            "pages": ["documentation/core/webhooks"]
-          },
-          {
-            "group": "Pay people",
-            "pages": [
-              "documentation/payouts/overview",
-              "documentation/payouts/mobile-money",
-              "documentation/payouts/bulk-payout",
-              "documentation/payouts/fees",
-              "documentation/payouts/payout-channels",
-              "documentation/payouts/reversals"
-            ]
-          },
-          {
-            "group": "Balances and reports",
-            "pages": [
-              "documentation/core/balances",
-              "documentation/core/transactions"
+              "documentation/payment-intents/management",
+              "documentation/payment-intents/callback_url",
+              "documentation/payment-intents/refund"
             ]
           },
           {
@@ -85,6 +63,18 @@
               "documentation/core/customers",
               "documentation/core/mandates",
               "documentation/core/coupons"
+            ]
+          },
+          {
+            "group": "Send money",
+            "pages": [
+              "documentation/payouts/overview",
+              "documentation/payouts/mobile-money",
+              "documentation/payouts/bulk-payout",
+              "documentation/payouts/fees",
+              "documentation/payouts/daily-limits",
+              "documentation/payouts/payout-channels",
+              "documentation/payouts/reversals"
             ]
           },
           {
@@ -97,10 +87,6 @@
             ]
           },
           {
-            "group": "Accept in person",
-            "pages": ["documentation/virtual-terminal"]
-          },
-          {
             "group": "Stablecoins",
             "pages": [
               "documentation/stablecoins/overview",
@@ -109,37 +95,30 @@
               "documentation/stablecoins/price-estimates",
               "documentation/stablecoins/resellers"
             ]
+          },
+          {
+            "group": "In person",
+            "pages": [
+              "documentation/virtual-terminal"
+            ]
+          },
+          {
+            "group": "Your money",
+            "pages": [
+              "documentation/core/balances",
+              "documentation/core/transactions"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "documentation/core/webhooks"
+            ]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "openapi": "openapi.json",
-        "groups": [
-          {
-            "group": "Payments",
-            "pages": ["POST /v1/payments"]
-          },
-          {
-            "group": "Payment links",
-            "pages": ["POST /v1/payment-links"]
-          },
-          {
-            "group": "Payouts",
-            "pages": ["POST /v1/transfers"]
-          },
-          {
-            "group": "Customers",
-            "pages": ["POST /v1/customers"]
-          },
-          {
-            "group": "Transactions",
-            "pages": ["GET /v1/transactions/{transaction_id}"]
-          }
-        ]
-      },
-      {
-        "tab": "Invoices",
+        "tab": "Billing",
         "groups": [
           {
             "group": "Invoices",
@@ -167,7 +146,46 @@
           },
           {
             "group": "WordPress",
-            "pages": ["plugins/woocommerce", "plugins/payment-form"]
+            "pages": [
+              "plugins/woocommerce",
+              "plugins/payment-form"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "openapi.json",
+        "groups": [
+          {
+            "group": "Payment Intents",
+            "pages": [
+              "POST /v1/payments"
+            ]
+          },
+          {
+            "group": "Payment Links",
+            "pages": [
+              "POST /v1/payment-links"
+            ]
+          },
+          {
+            "group": "Transfers",
+            "pages": [
+              "POST /v1/transfers"
+            ]
+          },
+          {
+            "group": "Customers",
+            "pages": [
+              "POST /v1/customers"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "pages": [
+              "GET /v1/transactions/{transaction_id}"
+            ]
           }
         ]
       }
@@ -216,7 +234,13 @@
     }
   },
   "contextual": {
-    "options": ["copy", "chatgpt", "claude", "mcp", "cursor"]
+    "options": [
+      "copy",
+      "chatgpt",
+      "claude",
+      "mcp",
+      "cursor"
+    ]
   },
   "footer": {
     "socials": {
