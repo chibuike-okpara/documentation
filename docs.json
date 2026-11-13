@@ -31,9 +31,7 @@
           },
           {
             "group": "Developer tools",
-            "pages": [
-              "documentation/cli"
-            ]
+            "pages": ["documentation/cli"]
           },
           {
             "group": "Accept payments",
@@ -87,20 +85,8 @@
             ]
           },
           {
-            "group": "Stablecoins",
-            "pages": [
-              "documentation/stablecoins/overview",
-              "documentation/stablecoins/accept-payments",
-              "documentation/stablecoins/convert-to-dalasi",
-              "documentation/stablecoins/price-estimates",
-              "documentation/stablecoins/resellers"
-            ]
-          },
-          {
             "group": "In person",
-            "pages": [
-              "documentation/virtual-terminal"
-            ]
+            "pages": ["documentation/virtual-terminal"]
           },
           {
             "group": "Your money",
@@ -111,9 +97,7 @@
           },
           {
             "group": "Webhooks",
-            "pages": [
-              "documentation/core/webhooks"
-            ]
+            "pages": ["documentation/core/webhooks"]
           }
         ]
       },
@@ -146,10 +130,7 @@
           },
           {
             "group": "WordPress",
-            "pages": [
-              "plugins/woocommerce",
-              "plugins/payment-form"
-            ]
+            "pages": ["plugins/woocommerce", "plugins/payment-form"]
           }
         ]
       },
@@ -159,33 +140,23 @@
         "groups": [
           {
             "group": "Payment Intents",
-            "pages": [
-              "POST /v1/payments"
-            ]
+            "pages": ["POST /v1/payments"]
           },
           {
             "group": "Payment Links",
-            "pages": [
-              "POST /v1/payment-links"
-            ]
+            "pages": ["POST /v1/payment-links"]
           },
           {
             "group": "Transfers",
-            "pages": [
-              "POST /v1/transfers"
-            ]
+            "pages": ["POST /v1/transfers"]
           },
           {
             "group": "Customers",
-            "pages": [
-              "POST /v1/customers"
-            ]
+            "pages": ["POST /v1/customers"]
           },
           {
             "group": "Transactions",
-            "pages": [
-              "GET /v1/transactions/{transaction_id}"
-            ]
+            "pages": ["GET /v1/transactions/{transaction_id}"]
           }
         ]
       }
@@ -234,13 +205,7 @@
     }
   },
   "contextual": {
-    "options": [
-      "copy",
-      "chatgpt",
-      "claude",
-      "mcp",
-      "cursor"
-    ]
+    "options": ["copy", "chatgpt", "claude", "mcp", "cursor"]
   },
   "footer": {
     "socials": {
