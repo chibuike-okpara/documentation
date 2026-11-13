@@ -5,31 +5,32 @@ description: "Five ways to accept payments, from no code at all to full control.
 
 All five options use the same checkout, accept the same payment methods and send the same webhooks. They differ in how much you build.
 
-| | Code needed | Customer pays on | Key used | Best for |
-| --- | --- | --- | --- | --- |
-| [Payment links](/documentation/core/payment-links) | None | Modem Pay's page | — | Selling on WhatsApp, Instagram, by SMS |
-| [Pay button](/documentation/payments/drop-in) | One HTML tag | A pop-up on your page | Public | Simple websites, donations |
-| [HTML Checkout](/documentation/payments/html-checkout) | One HTML form | Modem Pay's page | Public | Static sites with no backend |
-| [Checkout pop-up](/documentation/payments/modem-inline) | A few lines of JavaScript | A pop-up on your page | Public | Shops that want to react in the browser |
-| [Your own checkout](/documentation/payments/custom) | Server code | Modem Pay's page or your own UI | Secret | Apps with a backend, split payments, saved customers |
+|                                                         | Code needed               | Customer pays on                | Key used | Best for                                             |
+| ------------------------------------------------------- | ------------------------- | ------------------------------- | -------- | ---------------------------------------------------- |
+| [Payment links](/documentation/core/payment-links)      | None                      | Modem Pay's page                | —        | Selling on WhatsApp, Instagram, by SMS               |
+| [Pay button](/documentation/payments/drop-in)           | One HTML tag              | A pop-up on your page           | Public   | Simple websites, donations                           |
+| [HTML Checkout](/documentation/payments/html-checkout)  | One HTML form             | Modem Pay's page                | Public   | Static sites with no backend                         |
+| [Checkout pop-up](/documentation/payments/modem-inline) | A few lines of JavaScript | A pop-up on your page           | Public   | Shops that want to react in the browser              |
+| [Your own checkout](/documentation/payments/custom)     | Server code               | Modem Pay's page or your own UI | Secret   | Apps with a backend, split payments, saved customers |
 
 <Tip>
-  Not sure? Start with **payment intents** from your server ([Quickstart](/documentation/quickstart)). It works for any app, and you can add the pop-up or button later.
+  Not sure? Start with **payment intents** from your server
+  ([Quickstart](/documentation/quickstart)). It works for any app, and you can
+  add the pop-up or button later.
 </Tip>
 
 ## Payment methods
 
 Customers choose how to pay at checkout. Which methods appear depends on your account and country.
 
-| Method | Type |
-| --- | --- |
-| Wave | Mobile wallet |
+| Method    | Type          |
+| --------- | ------------- |
+| Wave      | Mobile wallet |
 | Afrimoney | Mobile wallet |
-| QMoney | Mobile wallet |
-| APS | Mobile wallet |
-| Yonna | Mobile wallet |
-| Card | Bank card |
-| USDT, USDC | [Stablecoins](/documentation/stablecoins/accept-payments) |
+| QMoney    | Mobile wallet |
+| APS       | Mobile wallet |
+| Yonna     | Mobile wallet |
+| Card      | Bank card     |
 
 To list what's switched on for your account, call `GET /v1/payments/gateways`.
 

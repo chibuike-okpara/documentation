@@ -38,9 +38,6 @@ Modem Pay is one API for getting paid and paying people in The Gambia. Your cust
   <Card title="Virtual terminals" icon="qrcode" href="/documentation/virtual-terminal">
     A QR code for each counter, with WhatsApp alerts for staff.
   </Card>
-  <Card title="Stablecoins" icon="coins" href="/documentation/stablecoins/overview">
-    Accept USDT and USDC, or turn them into dalasi.
-  </Card>
   <Card title="Coupons" icon="ticket" href="/documentation/core/coupons">
     Percentage or fixed discounts with limits and expiry dates.
   </Card>
@@ -846,7 +843,6 @@ Customers choose how to pay at checkout. Which methods appear depends on your ac
 | APS | Mobile wallet |
 | Yonna | Mobile wallet |
 | Card | Bank card |
-| USDT, USDC | [Stablecoins](/documentation/stablecoins/accept-payments) |
 
 To list what's switched on for your account, call `GET /v1/payments/gateways`.
 
