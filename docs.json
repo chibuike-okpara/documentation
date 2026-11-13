@@ -214,18 +214,6 @@
   },
   "redirects": [
     {
-      "source": "/documentation/defi/offramp",
-      "destination": "/documentation/stablecoins/convert-to-dalasi"
-    },
-    {
-      "source": "/documentation/defi/offramp-resellers",
-      "destination": "/documentation/stablecoins/resellers"
-    },
-    {
-      "source": "/documentation/defi/accept-stablecoin-payments",
-      "destination": "/documentation/stablecoins/accept-payments"
-    },
-    {
       "source": "/documentation/sessions/sessions",
       "destination": "/documentation/payment-intents/create"
     },
@@ -266,5 +254,5 @@
       "destination": "/documentation/cli"
     }
   ],
-  "description": "Accept mobile money and card payments, send payouts, split revenue and settle stablecoins in The Gambia."
+  "description": "Accept mobile money and card payments, send payouts, and split revenue in The Gambia."
 }
